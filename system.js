@@ -1,4 +1,4 @@
-import { FirstPersonCoach } from "./coach3d.js";
+﻿import { FirstPersonCoach } from "./coach3d.js";
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => Array.from(document.querySelectorAll(selector));
@@ -12,6 +12,7 @@ const shuffle = values => {
   return copy;
 };
 
+const LOCAL_DATA_ROOT = "_research/jiakao-baodian-dump/";
 const REMOTE_DATA_ROOT = "https://raw.githubusercontent.com/china794/jiakao-baodian-dump/dcd46966537b220e971022d6f926c7229adb64a5/";
 const DATA_ROOT = REMOTE_DATA_ROOT;
 const BANK_URL = `${DATA_ROOT}data/bank.json`;
@@ -29,6 +30,7 @@ let currentRoute = "home";
 let recordTab = "wrong";
 let coach = null;
 let coachSignalTimer = 0;
+let ruleRoadType = "ordinary";
 
 function todayKey() {
   const date = new Date();
@@ -201,6 +203,7 @@ function navigate(route) {
   $$(".side-nav [data-route],.bottom-nav [data-route]").forEach(button => button.classList.toggle("is-active", button.dataset.route === route || (route === "practice" && button.dataset.route === "practice")));
   if (route === "home") renderHome();
   if (route === "knowledge") renderKnowledge();
+  if (route === "rules") updateOverspeedCalculator();
   if (route === "records") renderRecords();
   if (route === "coach") enterCoach();
   const page = $(`[data-page="${route}"]`);
@@ -231,10 +234,65 @@ function renderHome() {
   $("#todayBar").style.width = `${clamp(today.answered / 30 * 100, 0, 100)}%`;
 }
 
+function overspeedMarkerPosition(excess, isOverLimit) {
+  if (!isOverLimit) return 7.8;
+  if (excess < 20) return 15.7 + excess / 20 * 12.9;
+  if (excess < 50) return 28.6 + (excess - 20) / 30 * 21.4;
+  if (excess < 70) return 50 + (excess - 50) / 20 * 14.3;
+  if (excess < 100) return 64.3 + (excess - 70) / 30 * 21.4;
+  return 85.7 + clamp((excess - 100) / 100, 0, 1) * 14.3;
+}
+
+function updateOverspeedCalculator() {
+  const limitInput = $("#ruleLimitInput");
+  const actualInput = $("#ruleActualInput");
+  if (!limitInput || !actualInput) return;
+  const limit = Number(limitInput.value);
+  const actual = Number(actualInput.value);
+  const isOverLimit = actual > limit;
+  const excess = isOverLimit ? (actual - limit) / limit * 100 : 0;
+  const highway = ruleRoadType === "highway";
+  let level = 0;
+  let band = "未超过道路限速";
+  let fine = "无处罚";
+  let points = "0 分";
+  let license = "无影响";
+
+  if (isOverLimit && excess < 20) {
+    level = 1; band = "超过限定时速不足20%"; fine = "警告 · ¥0"; license = "不吊销";
+  } else if (excess >= 20 && excess < 50) {
+    level = 2; band = "20%以上不足50%"; fine = highway ? "¥200" : "¥100"; points = highway ? "6 分" : "3 分"; license = "不吊销";
+  } else if (excess >= 50 && excess < 70) {
+    level = 3; band = "50%以上不足70%"; fine = highway ? "¥1000" : "¥500"; points = highway ? "12 分" : "6 分"; license = "可并处吊销";
+  } else if (excess >= 70 && excess < 100) {
+    level = 4; band = "70%以上不足100%"; fine = highway ? "¥2000" : "¥1000"; points = highway ? "12 分" : "6 分"; license = "并处吊销";
+  } else if (excess >= 100) {
+    level = 5; band = "超过限定时速100%以上"; fine = "¥2000"; points = highway ? "12 分" : "6 分"; license = "并处吊销";
+  }
+
+  $("#ruleLimitOutput").textContent = limit;
+  $("#ruleActualOutput").textContent = actual;
+  $("#overspeedPercent").textContent = `${Math.round(excess)}%`;
+  $("#overspeedBand").textContent = band;
+  $("#overspeedFine").textContent = fine;
+  $("#overspeedPoints").textContent = points;
+  $("#overspeedLicense").textContent = license;
+  $("#overspeedScope").textContent = `普通小客车 · ${highway ? "高速 / 快速路" : "普通道路"}`;
+  $("#overspeedResult").dataset.level = String(level);
+  $("#overspeedMarker").style.left = `${overspeedMarkerPosition(excess, isOverLimit)}%`;
+}
+
+function startRulesPractice() {
+  const pattern = /(时速|限速|车速|车距|能见度|罚款|记\s*\d+\s*分|警告标志|安全距离)/;
+  const questions = bank.filter(question => pattern.test(`${question.question} ${stripHtml(question.explain)}`));
+  startPractice("node", { title: "法规数字专项", ids: shuffle(questions).slice(0, 100).map(question => question.questionId) });
+}
+
 function handleAction(action) {
   if (action === "sequence") startPractice("sequence");
   if (action === "random") startPractice("random");
   if (action === "exam") $("#examDialog").showModal();
+  if (action === "rules-practice") startRulesPractice();
 }
 
 function startPractice(mode, options = {}) {
@@ -792,6 +850,18 @@ function bindAppEvents() {
   $("#closeAnswerSheet").addEventListener("click", () => $("#answerSheetDialog").close());
   $$(".record-tabs [data-record-tab]").forEach(button => button.addEventListener("click", () => { recordTab = button.dataset.recordTab; renderRecords(); }));
   $("#knowledgeSearch").addEventListener("input", renderKnowledgeCards);
+  [$("#ruleLimitInput"), $("#ruleActualInput")].forEach(input => input.addEventListener("input", updateOverspeedCalculator));
+  $$('[data-road-type]').forEach(button => button.addEventListener("click", () => {
+    ruleRoadType = button.dataset.roadType;
+    $$('[data-road-type]').forEach(item => item.classList.toggle("is-active", item === button));
+    updateOverspeedCalculator();
+  }));
+  $("#printRules").addEventListener("click", () => window.print());
+  const coachSourceDialog = $("#coachSourceDialog");
+  $("#coachSourceButton").addEventListener("click", () => { coach?.stop(); coachSourceDialog.showModal(); });
+  [$("#closeCoachSource"), $("#ackCoachSource")].forEach(button => button.addEventListener("click", () => coachSourceDialog.close()));
+  $("#openRulesFromCoach").addEventListener("click", () => { coachSourceDialog.close(); navigate("rules"); });
+  coachSourceDialog.addEventListener("close", () => { if (currentRoute === "coach") coach?.start(); });
   $("#openSearch").addEventListener("click", openSearch);
   $("#mobileSearch").addEventListener("click", openSearch);
   $("#globalSearchInput").addEventListener("input", event => renderSearch(event.target.value));
