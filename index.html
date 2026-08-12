@@ -37,6 +37,7 @@
         <button type="button" data-action="exam"><i>考</i><span>模拟考试</span></button>
         <button type="button" data-route="coach"><i>车</i><span>AI 练车</span></button>
         <button type="button" data-route="knowledge"><i>专</i><span>专项练习</span></button>
+        <button type="button" data-route="rules"><i>图</i><span>数字总览</span></button>
         <button type="button" data-route="records"><i>错</i><span>错题本</span><em id="sideWrongCount">0</em></button>
       </aside>
 
@@ -76,7 +77,7 @@
               <button type="button" data-action="exam"><i class="green">考</i><span><b>模拟考试</b><small>仿真考场</small></span></button>
               <button type="button" data-route="records" data-record-tab="wrong"><i class="red">错</i><span><b>错题本</b><small id="homeWrongCount">0 道</small></span></button>
               <button type="button" data-route="records" data-record-tab="favorite"><i class="gold">藏</i><span><b>我的收藏</b><small id="homeFavoriteCount">0 道</small></span></button>
-              <button type="button" data-route="knowledge"><i class="cyan">知</i><span><b>知识点</b><small>39 个专项</small></span></button>
+              <button type="button" data-route="rules"><i class="cyan">图</i><span><b>数字总览</b><small>限速 · 车距 · 处罚</small></span></button>
               <button type="button" data-route="records" data-record-tab="score"><i class="indigo">绩</i><span><b>考试成绩</b><small id="homeExamCount">0 次</small></span></button>
             </section>
 
@@ -144,6 +145,92 @@
           </div>
         </section>
 
+        <section class="page rules-page" data-page="rules" aria-labelledby="rulesTitle">
+          <header class="page-header rules-page-header">
+            <div><button class="back-button" type="button" data-route="home">‹</button><span><h1 id="rulesTitle">法规数字总览</h1><p>武汉 / 湖北 · C1 普通小客车 · 数值均标注适用条件</p></span></div>
+            <div class="rules-header-actions"><button type="button" data-action="rules-practice">练数字题</button><button class="primary" id="printRules" type="button">打印一张图</button></div>
+          </header>
+
+          <div class="rules-shell" id="rulesSheet">
+            <section class="rule-map" aria-labelledby="ruleMapTitle">
+              <header class="rule-map-heading">
+                <div><span>ONE ROAD · ALL NUMBERS</span><h2 id="ruleMapTitle">一张数字道路图</h2><p>先看场景，再找数字；同一个数字在不同场景中含义不同。</p></div>
+                <div class="rule-scope-stamp"><b>WH</b><span>武汉 / 湖北<br>C1 小客车</span></div>
+              </header>
+
+              <div class="rule-map-grid">
+                <article class="speed-board">
+                  <header><span>01 / 速度</span><h3>没有限速标志时</h3></header>
+                  <div class="speed-sign-grid">
+                    <div><i>30</i><b>城市道路</b><small>没有道路中心线</small></div>
+                    <div><i>40</i><b>公路</b><small>没有道路中心线</small></div>
+                    <div><i>50</i><b>城市道路</b><small>同方向只有 1 条车道</small></div>
+                    <div><i>70</i><b>公路</b><small>同方向只有 1 条车道</small></div>
+                  </div>
+                  <div class="special-speed"><strong>30</strong><span><b>特殊情形上限</b><small>进出非机动车道、铁路道口、急弯窄路窄桥、掉头转弯下陡坡、冰雪泥泞、牵引故障车等</small></span></div>
+                  <div class="highway-band"><span>高速公路</span><b><em>最低 60</em><i></i><em>小客车最高 120</em></b><small>两车道左侧最低 100；三车道以上最左侧最低 110、中间最低 90</small></div>
+                </article>
+
+                <article class="fog-board">
+                  <header><span>02 / 能见度</span><h3>高速雾天：261 口诀</h3></header>
+                  <div class="fog-row"><strong>&lt; 200<small>m 能见度</small></strong><span>车速 <b>≤ 60</b> km/h</span><span>车距 <b>≥ 100</b> m</span><em>雾灯 · 近光 · 示廓 · 前后位灯</em></div>
+                  <div class="fog-row"><strong>&lt; 100<small>m 能见度</small></strong><span>车速 <b>≤ 40</b> km/h</span><span>车距 <b>≥ 50</b> m</span><em>以上灯光 + 危险报警闪光灯</em></div>
+                  <div class="fog-row is-critical"><strong>&lt; 50<small>m 能见度</small></strong><span>车速 <b>≤ 20</b> km/h</span><span>从最近出口驶离</span><em>以上灯光 + 危险报警闪光灯</em></div>
+                </article>
+
+                <article class="distance-board">
+                  <header><span>03 / 距离</span><h3>按数字从近到远记忆</h3><small>位置仅表示顺序，不按比例</small></header>
+                  <div class="distance-road" aria-label="常考距离从 4 米到 150 米">
+                    <div class="distance-lane"></div>
+                    <div class="distance-marker m10"><i></i><strong>4–10 m</strong><span>软连接牵引</span></div>
+                    <div class="distance-marker m30"><i></i><strong>30 m</strong><span>公交站 · 急救站<br>加油站 · 消防设施禁停</span></div>
+                    <div class="distance-marker m50"><i></i><strong>50 m</strong><span>路口 · 铁路道口 · 急弯<br>窄路桥梁陡坡隧道禁停</span></div>
+                    <div class="distance-marker m100"><i></i><strong>50–100 m</strong><span>普通道路故障警告标志</span></div>
+                    <div class="distance-marker mfollow"><i></i><strong>50 / 100 m</strong><span>高速跟车：低于 100 km/h 至少 50 m<br>超过 100 km/h 至少 100 m</span></div>
+                    <div class="distance-marker m150"><i></i><strong>150 m</strong><span>夜间会车改近光<br>高速故障警告标志在来车方向 150 m 外</span></div>
+                  </div>
+                </article>
+              </div>
+              <footer><span>速度单位 km/h · 距离单位 m</span><span>法条口径：道路交通安全法及实施条例</span></footer>
+            </section>
+
+            <section class="overspeed-lab" aria-labelledby="overspeedTitle">
+              <header><div><span>互动计算</span><h2 id="overspeedTitle">超速处罚尺</h2><p>拖动实际车速，立即查看湖北罚款与全国记分如何同步升级。</p></div><div class="road-type-toggle" role="group" aria-label="道路类型"><button class="is-active" type="button" data-road-type="ordinary">普通道路</button><button type="button" data-road-type="highway">高速 / 城市快速路</button></div></header>
+              <div class="speed-controls">
+                <label><span>道路限速 <output id="ruleLimitOutput">100</output> km/h</span><input id="ruleLimitInput" type="range" min="20" max="120" step="10" value="100"></label>
+                <label><span>实际车速 <output id="ruleActualOutput">126</output> km/h</span><input id="ruleActualInput" type="range" min="20" max="240" step="1" value="126"></label>
+              </div>
+              <div class="overspeed-scale" aria-hidden="true"><span>未超速</span><span>警告<br>&lt;20%</span><span>20–50%</span><span>50–70%</span><span>70–100%</span><span>≥100%</span><i id="overspeedMarker"></i></div>
+              <div class="overspeed-result" id="overspeedResult" data-level="2">
+                <div class="overspeed-gauge"><span>超出限速</span><strong id="overspeedPercent">26%</strong><small id="overspeedBand">20%以上不足50%</small></div>
+                <dl><div><dt>湖北罚款</dt><dd id="overspeedFine">¥100</dd></div><div><dt>全国记分</dt><dd id="overspeedPoints">3 分</dd></div><div><dt>驾驶证</dt><dd id="overspeedLicense">不吊销</dd></div><div><dt>处罚口径</dt><dd id="overspeedScope">普通小客车 · 普通道路</dd></div></dl>
+              </div>
+              <p class="lab-note">边界按法规原文处理：20%、50%、70%、100% 均进入后一档。超速不足 20% 仍属违法，在湖北给予警告；普通小客车不记分、不罚款。</p>
+            </section>
+
+            <section class="penalty-ladder" aria-labelledby="penaltyTitle">
+              <header><span>处罚联动</span><h2 id="penaltyTitle">记分越高，后果如何逐步加重</h2><p>每档选一个 C1 高频代表行为；罚款金额采用湖北现行地方标准。</p></header>
+              <div class="penalty-steps">
+                <article data-points="1"><strong>1<small>分</small></strong><h3>未按规定系安全带</h3><p>警告或 <b>¥50</b></p><span>基础操作遗漏</span></article>
+                <article data-points="3"><strong>3<small>分</small></strong><h3>手持拨打、接听电话</h3><p>警告或 <b>¥50</b></p><span>妨碍安全驾驶</span></article>
+                <article data-points="6"><strong>6<small>分</small></strong><h3>不按交通信号灯通行</h3><p>警告或 <b>¥200</b></p><span>一次扣掉半个周期</span></article>
+                <article data-points="9"><strong>9<small>分</small></strong><h3>高速 / 快速路违法停车</h3><p>警告或 <b>¥200</b></p><span>接近满分线</span></article>
+                <article data-points="12"><strong>12<small>分</small></strong><h3>饮酒后驾驶机动车</h3><p><b>¥2000</b> · 暂扣 6 个月</p><span>一次达到满分</span></article>
+              </div>
+            </section>
+
+            <section class="rules-sources" aria-labelledby="ruleSourcesTitle">
+              <div><span>核对日期 2026-08-12</span><h2 id="ruleSourcesTitle">数据口径与来源</h2><p>“记分”来自全国统一规章，“罚款”来自湖北地方实施办法；两者不是一回事。此页用于驾考学习，具体执法以最新法规、现场事实和交管部门认定为准。</p></div>
+              <nav>
+                <a href="https://gat.hubei.gov.cn/bmdt/ztzl/2021n/jgywzl/zcfg/202201/t20220111_3959758.shtml" target="_blank" rel="noopener">道路交通安全法实施条例 ↗</a>
+                <a href="https://gat.hubei.gov.cn/bmdt/ztzl/2021n/jgywzl/zcfg/202201/t20220111_3959749.shtml" target="_blank" rel="noopener">违法行为记分管理办法 ↗</a>
+                <a href="https://www.hppc.gov.cn/null/dhwj/1859237376896184322.html" target="_blank" rel="noopener">湖北省实施办法 ↗</a>
+                <a href="https://gaj.wuhan.gov.cn/zwgk_12/zcfg/zcwd/202212/t20221219_2116514.html" target="_blank" rel="noopener">武汉交警超速答复 ↗</a>
+              </nav>
+            </section>
+          </div>
+        </section>
+
         <section class="page records-page" data-page="records" aria-labelledby="recordsTitle">
           <header class="page-header records-header"><div><button class="back-button" type="button" data-route="home">‹</button><span><h1 id="recordsTitle">学习记录</h1><p>错题、收藏与模拟考试成绩</p></span></div></header>
           <nav class="record-tabs"><button class="is-active" type="button" data-record-tab="wrong">错题本 <em id="tabWrongCount">0</em></button><button type="button" data-record-tab="favorite">我的收藏 <em id="tabFavoriteCount">0</em></button><button type="button" data-record-tab="score">考试成绩</button></nav>
@@ -169,13 +256,13 @@
             </header>
 
             <section class="coach-task-card">
-              <header><span>当前任务</span><b id="coachStepIndex">1 / 5</b></header>
+              <header><span>当前任务</span><button id="coachSourceButton" type="button">提示来源</button><b id="coachStepIndex">1 / 5</b></header>
               <h2 id="coachTaskTitle">上车准备</h2>
               <p id="coachTaskText">系好安全带，确认挡位处于 P 挡。</p>
               <div><i id="coachTaskBar"></i></div>
             </section>
 
-            <aside class="coach-score-card"><span>本次成绩</span><strong id="coachScore">100</strong><small>分</small><div id="coachEventLog"><p>等待开始训练</p></div></aside>
+            <aside class="coach-score-card"><span>模拟训练分</span><strong id="coachScore">100</strong><small>分</small><div id="coachEventLog"><p>等待开始训练</p></div></aside>
 
             <div class="speed-limit-sign" aria-label="限速 40"><span>40</span></div>
 
@@ -219,7 +306,7 @@
       <button class="is-active" type="button" data-route="home"><i>⌂</i><span>首页</span></button>
       <button type="button" data-route="practice" data-action="sequence"><i>练</i><span>题库</span></button>
       <button class="coach-nav" type="button" data-route="coach"><i>车</i><span>AI练车</span></button>
-      <button type="button" data-route="knowledge"><i>专</i><span>专项</span></button>
+      <button type="button" data-route="rules"><i>图</i><span>速记</span></button>
       <button type="button" data-route="records"><i>错</i><span>错题</span></button>
     </nav>
   </div>
@@ -234,6 +321,17 @@
   </dialog>
 
   <dialog class="answer-sheet-dialog" id="answerSheetDialog"><header><h2>答题卡</h2><button type="button" id="closeAnswerSheet">×</button></header><div id="fullAnswerGrid"></div></dialog>
+  <dialog class="coach-source-dialog" id="coachSourceDialog">
+    <header><div><span>PROVENANCE</span><h2>这些提示从哪里来</h2></div><button id="closeCoachSource" type="button" aria-label="关闭">×</button></header>
+    <div class="coach-source-grid">
+      <article><strong>20 条</strong><h3>任务步骤</h3><p>由本项目为起步、变道、路口和靠边停车各写 5 步，通过车辆状态机判断是否完成；不是木仓原始文案。</p></article>
+      <article><strong>7 条</strong><h3>即时违规</h3><p>未系安全带、变道未打灯、越线、驶出道路、超速、闯红灯和碰撞，由模拟器阈值触发。</p></article>
+      <article><strong>浏览器</strong><h3>语音播报</h3><p>系统调用 Web Speech 朗读当前文字，没有下载或复制任何原版教练语音。</p></article>
+      <article><strong>训练分</strong><h3>10 / 20 / 30 / 40</h3><p>这是为了反馈力度设计的模拟训练扣分，不等于交管部门的 1 / 3 / 6 / 9 / 12 记分。</p></article>
+    </div>
+    <p class="coach-source-note">题库题干与解析来自页面加载的 6406 题数据；发动机、转向灯、答题反馈音由浏览器 Web Audio 实时合成；道路和车辆由 Three.js 几何体生成。</p>
+    <footer><button id="openRulesFromCoach" type="button">查看法规数字总览</button><button class="primary" id="ackCoachSource" type="button">知道了</button></footer>
+  </dialog>
   <div class="toast" id="toast" role="status"></div>
 
   <script type="module" src="system.js"></script>
