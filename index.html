@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#ffffff">
+  <title>驾考宝典｜武汉 C1</title>
+  <link rel="stylesheet" href="system.css">
+</head>
+<body>
+  <div class="app-loading" id="appLoading">
+    <span class="brand-mark">典</span>
+    <p>题库加载中</p>
+  </div>
+
+  <div class="jk-app" id="jkApp" hidden>
+    <header class="topbar">
+      <button class="brand" type="button" data-route="home" aria-label="返回首页">
+        <span class="brand-mark">典</span><b>驾考宝典</b>
+      </button>
+      <div class="car-profile">
+        <button type="button" id="cityPicker"><b>武汉</b><span>⌄</span></button>
+        <i></i>
+        <button type="button" id="licensePicker"><b>C1 小车</b><span>⌄</span></button>
+      </div>
+      <button class="global-search" id="openSearch" type="button"><span>⌕</span><em>搜索题目、知识点</em><kbd>Ctrl K</kbd></button>
+      <div class="top-actions">
+        <button id="soundSwitch" type="button" aria-pressed="true" title="答题音效">♫</button>
+        <button class="user-avatar" type="button" data-route="records">学员</button>
+      </div>
+    </header>
+
+    <div class="app-frame">
+      <aside class="side-nav" aria-label="主导航">
+        <button class="is-active" type="button" data-route="home"><i>⌂</i><span>首页</span></button>
+        <button type="button" data-route="practice" data-action="sequence"><i>练</i><span>题库</span></button>
+        <button type="button" data-action="exam"><i>考</i><span>模拟考试</span></button>
+        <button type="button" data-route="coach"><i>车</i><span>AI 练车</span></button>
+        <button type="button" data-route="knowledge"><i>专</i><span>专项练习</span></button>
+        <button type="button" data-route="records"><i>错</i><span>错题本</span><em id="sideWrongCount">0</em></button>
+      </aside>
+
+      <main class="app-main" id="appMain">
+        <section class="page home-page is-active" data-page="home" aria-labelledby="homeTitle">
+          <div class="mobile-home-bar"><button type="button" id="mobileCity">武汉⌄</button><strong>驾考宝典</strong><button type="button" id="mobileSearch">⌕</button></div>
+          <header class="subject-header">
+            <div>
+              <h1 id="homeTitle">C1 小车</h1>
+              <p>武汉题库 · <span id="bankVersion">2026</span> 新规</p>
+            </div>
+            <nav class="subject-tabs" aria-label="考试科目">
+              <button class="is-active" type="button" data-subject="k1"><b>科目一</b><span>理论考试</span></button>
+              <button type="button" data-subject="k2"><b>科目二</b><span>场地练车</span></button>
+              <button type="button" data-subject="k3"><b>科目三</b><span>道路驾驶</span></button>
+              <button type="button" data-subject="k4"><b>科目四</b><span>安全文明</span></button>
+            </nav>
+          </header>
+
+          <div class="home-content">
+            <section class="study-card" aria-label="学习进度">
+              <div class="progress-orbit sequence-orbit" id="continueSequence" role="button" tabindex="0">
+                <div class="orbit-ring" id="sequenceRing"><span><b id="sequenceDone">0</b><small id="sequenceTotal">/ 6406</small></span></div>
+                <strong>顺序练习</strong><p id="sequenceHint">从第 1 题开始</p>
+              </div>
+              <div class="progress-divider"></div>
+              <div class="progress-orbit exam-orbit" id="continueExam" role="button" tabindex="0">
+                <div class="orbit-ring" id="examRing"><span><b id="bestExamScore">--</b><small>分</small></span></div>
+                <strong>模拟考试</strong><p id="examHint">100 题 · 45 分钟</p>
+              </div>
+            </section>
+
+            <section class="quick-modules" aria-label="练习方式">
+              <button type="button" data-action="sequence"><i class="orange">顺</i><span><b>顺序练习</b><small>完整题库</small></span></button>
+              <button type="button" data-action="random"><i class="blue">随</i><span><b>随机练习</b><small>随机抽题</small></span></button>
+              <button type="button" data-route="knowledge"><i class="violet">专</i><span><b>专项练习</b><small>按知识点</small></span></button>
+              <button type="button" data-action="exam"><i class="green">考</i><span><b>模拟考试</b><small>仿真考场</small></span></button>
+              <button type="button" data-route="records" data-record-tab="wrong"><i class="red">错</i><span><b>错题本</b><small id="homeWrongCount">0 道</small></span></button>
+              <button type="button" data-route="records" data-record-tab="favorite"><i class="gold">藏</i><span><b>我的收藏</b><small id="homeFavoriteCount">0 道</small></span></button>
+              <button type="button" data-route="knowledge"><i class="cyan">知</i><span><b>知识点</b><small>39 个专项</small></span></button>
+              <button type="button" data-route="records" data-record-tab="score"><i class="indigo">绩</i><span><b>考试成绩</b><small id="homeExamCount">0 次</small></span></button>
+            </section>
+
+            <section class="coach-entry" data-route="coach" role="button" tabindex="0">
+              <div class="coach-entry-copy"><span>AI 教练车</span><h2>第一人称道路训练</h2><p>起步 · 变道 · 路口 · 靠边停车</p><button type="button" data-route="coach">开始练车</button></div>
+              <div class="coach-entry-road" aria-hidden="true"><i class="road-line one"></i><i class="road-line two"></i><span class="entry-car">▰</span><em>40</em></div>
+            </section>
+
+            <section class="today-panel">
+              <header><div><h2>今日练习</h2><p>答够 30 题完成今日目标</p></div><strong><span id="todayAnswered">0</span>/30</strong></header>
+              <div class="today-bar"><i id="todayBar"></i></div>
+              <dl>
+                <div><dt>今日答题</dt><dd id="todayStatAnswered">0</dd></div>
+                <div><dt>正确率</dt><dd id="todayAccuracy">--</dd></div>
+                <div><dt>连续答对</dt><dd id="todayStreak">0</dd></div>
+                <div><dt>累计答题</dt><dd id="totalAnswered">0</dd></div>
+              </dl>
+            </section>
+          </div>
+        </section>
+
+        <section class="page practice-page" data-page="practice" aria-labelledby="practiceTitle">
+          <header class="practice-topbar">
+            <button class="back-button" type="button" data-route="home">‹</button>
+            <div><h1 id="practiceTitle">顺序练习</h1><p id="practiceSubtitle">C1 小车 · 科目一</p></div>
+            <div class="practice-progress"><span><b id="questionPosition">1</b>/<em id="questionQueueTotal">6406</em></span><i><b id="questionProgressBar"></b></i></div>
+            <button class="practice-tool" id="readQuestion" type="button" title="朗读题目">听</button>
+            <button class="practice-tool" id="favoriteQuestion" type="button" aria-pressed="false" title="收藏">☆</button>
+          </header>
+
+          <div class="practice-layout">
+            <article class="question-card">
+              <div class="question-labels"><span id="questionType">单选题</span><em id="questionId">#800000</em><i id="questionDifficulty">难度 3</i></div>
+              <h2 id="questionText">题目加载中…</h2>
+              <div class="question-media" id="questionMedia" hidden></div>
+              <div class="answer-options" id="answerOptions"></div>
+              <button class="confirm-multiple" id="confirmMultiple" type="button" hidden disabled>确认答案</button>
+              <section class="answer-analysis" id="answerAnalysis" hidden>
+                <header><strong id="answerResult">回答正确</strong><span>正确答案 <b id="correctAnswer">A</b></span></header>
+                <div class="answer-key"><span>答案解析</span><p id="answerExplanation"></p></div>
+              </section>
+              <footer class="question-actions">
+                <button id="previousQuestion" type="button">上一题</button>
+                <button id="openAnswerSheet" type="button">答题卡</button>
+                <button class="primary" id="nextQuestion" type="button">下一题</button>
+              </footer>
+            </article>
+
+            <aside class="practice-side">
+              <section class="mode-summary"><span id="modeBadge">顺序练习</span><strong id="sideCorrectRate">--</strong><small>本次正确率</small><dl><div><dt>已答</dt><dd id="sessionAnswered">0</dd></div><div><dt>答对</dt><dd id="sessionCorrect">0</dd></div></dl></section>
+              <section class="question-navigator"><header><b>答题卡</b><span><i class="answered-dot"></i>已答 <i class="current-dot"></i>当前</span></header><div id="sideQuestionGrid"></div></section>
+              <button class="finish-session" id="finishSession" type="button">结束练习</button>
+            </aside>
+          </div>
+        </section>
+
+        <section class="page knowledge-page" data-page="knowledge" aria-labelledby="knowledgeTitle">
+          <header class="page-header">
+            <div><button class="back-button" type="button" data-route="home">‹</button><span><h1 id="knowledgeTitle">专项练习</h1><p>选择知识点开始练习</p></span></div>
+            <label><span>⌕</span><input id="knowledgeSearch" type="search" placeholder="搜索：灯光、车距、记分"></label>
+          </header>
+          <div class="knowledge-layout">
+            <aside class="knowledge-groups" id="knowledgeGroups"></aside>
+            <section class="knowledge-list" id="knowledgeList"></section>
+          </div>
+        </section>
+
+        <section class="page records-page" data-page="records" aria-labelledby="recordsTitle">
+          <header class="page-header records-header"><div><button class="back-button" type="button" data-route="home">‹</button><span><h1 id="recordsTitle">学习记录</h1><p>错题、收藏与模拟考试成绩</p></span></div></header>
+          <nav class="record-tabs"><button class="is-active" type="button" data-record-tab="wrong">错题本 <em id="tabWrongCount">0</em></button><button type="button" data-record-tab="favorite">我的收藏 <em id="tabFavoriteCount">0</em></button><button type="button" data-record-tab="score">考试成绩</button></nav>
+          <div class="record-content" id="recordContent"></div>
+        </section>
+
+        <section class="page coach-page" data-page="coach" aria-label="第一人称 AI 教练车">
+          <div class="coach-stage" id="coachStage">
+            <div class="coach-scene" id="coachScene"></div>
+            <div class="mirror-frame" aria-label="后视镜"><span>后视镜</span></div>
+            <div class="side-mirror left" aria-label="左后视镜"><span>左后视镜</span></div>
+            <div class="side-mirror right" aria-label="右后视镜"><span>右后视镜</span></div>
+
+            <header class="coach-hud-top">
+              <button class="coach-exit" type="button" data-route="home">‹ 退出练车</button>
+              <div class="coach-mode-tabs" id="coachScenarioTabs">
+                <button class="is-active" type="button" data-scenario="start">起步</button>
+                <button type="button" data-scenario="lane">变更车道</button>
+                <button type="button" data-scenario="intersection">通过路口</button>
+                <button type="button" data-scenario="park">靠边停车</button>
+              </div>
+              <button class="coach-reset" id="coachReset" type="button">重新开始</button>
+            </header>
+
+            <section class="coach-task-card">
+              <header><span>当前任务</span><b id="coachStepIndex">1 / 5</b></header>
+              <h2 id="coachTaskTitle">上车准备</h2>
+              <p id="coachTaskText">系好安全带，确认挡位处于 P 挡。</p>
+              <div><i id="coachTaskBar"></i></div>
+            </section>
+
+            <aside class="coach-score-card"><span>本次成绩</span><strong id="coachScore">100</strong><small>分</small><div id="coachEventLog"><p>等待开始训练</p></div></aside>
+
+            <div class="speed-limit-sign" aria-label="限速 40"><span>40</span></div>
+
+            <section class="cockpit" aria-label="车辆驾驶舱">
+              <div class="left-dashboard">
+                <button class="dash-control" id="seatbeltButton" type="button"><i>⚑</i><span>安全带</span></button>
+                <button class="dash-control" id="ignitionButton" type="button"><i>⏻</i><span>点火</span></button>
+                <button class="dash-control" id="lightsButton" type="button"><i>☼</i><span>灯光</span></button>
+              </div>
+              <div class="instrument-cluster">
+                <div class="signal-arrow left" id="leftSignalIndicator">‹</div>
+                <div class="speed-display"><strong id="coachSpeed">0</strong><span>km/h</span></div>
+                <div class="gear-display"><small>挡位</small><strong id="coachGear">P</strong></div>
+                <div class="signal-arrow right" id="rightSignalIndicator">›</div>
+              </div>
+              <div class="steering-column">
+                <button class="signal-stalk left" id="coachLeftSignal" type="button">Q<br><span>左灯</span></button>
+                <div class="steering-wheel" id="steeringWheel"><i></i><b>典</b></div>
+                <button class="signal-stalk right" id="coachRightSignal" type="button">E<br><span>右灯</span></button>
+              </div>
+              <div class="center-console">
+                <div class="gear-selector" role="group" aria-label="挡位">
+                  <button class="is-active" type="button" data-gear="P">P</button><button type="button" data-gear="R">R</button><button type="button" data-gear="N">N</button><button type="button" data-gear="D">D</button>
+                </div>
+                <button class="horn-button" id="coachHorn" type="button">喇叭 H</button>
+              </div>
+              <div class="pedals">
+                <button class="brake-pedal" id="brakePedal" type="button"><span>刹车</span><kbd>S</kbd></button>
+                <button class="accelerator-pedal" id="acceleratorPedal" type="button"><span>油门</span><kbd>W</kbd></button>
+              </div>
+            </section>
+
+            <div class="coach-key-help"><span>A / D 转向</span><span>W 油门</span><span>S / 空格 刹车</span><span>Q / E 转向灯</span></div>
+            <div class="coach-message" id="coachMessage" role="status"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <nav class="bottom-nav" aria-label="移动端导航">
+      <button class="is-active" type="button" data-route="home"><i>⌂</i><span>首页</span></button>
+      <button type="button" data-route="practice" data-action="sequence"><i>练</i><span>题库</span></button>
+      <button class="coach-nav" type="button" data-route="coach"><i>车</i><span>AI练车</span></button>
+      <button type="button" data-route="knowledge"><i>专</i><span>专项</span></button>
+      <button type="button" data-route="records"><i>错</i><span>错题</span></button>
+    </nav>
+  </div>
+
+  <dialog class="search-dialog" id="searchDialog">
+    <form method="dialog"><label><span>⌕</span><input id="globalSearchInput" type="search" placeholder="输入题干或知识点" autocomplete="off"><button value="cancel" aria-label="关闭">×</button></label></form>
+    <div class="search-result-list" id="globalSearchResults"><p>输入关键词搜索 6406 道题</p></div>
+  </dialog>
+
+  <dialog class="exam-dialog" id="examDialog">
+    <div class="exam-dialog-icon">考</div><h2>科目一模拟考试</h2><p>100 道题，45 分钟。答题后不能修改，90 分及格。</p><dl><div><dt>题目</dt><dd>100 题</dd></div><div><dt>时间</dt><dd>45 分钟</dd></div><div><dt>及格</dt><dd>90 分</dd></div></dl><div><button type="button" id="cancelExam">取消</button><button class="primary" type="button" id="startExam">开始考试</button></div>
+  </dialog>
+
+  <dialog class="answer-sheet-dialog" id="answerSheetDialog"><header><h2>答题卡</h2><button type="button" id="closeAnswerSheet">×</button></header><div id="fullAnswerGrid"></div></dialog>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script type="module" src="system.js"></script>
+</body>
+</html>
