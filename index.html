@@ -2,15 +2,19 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
-  <title>驾考宝典｜武汉 C1</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="description" content="木仓科技驾考训练演示：题库练习、模拟考试与三维道路训练。">
+  <title>木仓科技 · 驾考训练</title>
   <link rel="stylesheet" href="system.css">
 </head>
 <body>
-  <div class="app-loading" id="appLoading">
+  <div class="app-loading" id="appLoading" role="status" aria-live="polite">
     <span class="brand-mark">典</span>
     <p>题库加载中</p>
+    <button class="primary" id="retryLoading" type="button" hidden>重新加载题库</button>
+    <a class="loading-coach-link" href="simulator/">先体验三维道路训练 →</a>
   </div>
 
   <div class="jk-app" id="jkApp" hidden>
@@ -47,7 +51,7 @@
           <header class="subject-header">
             <div>
               <h1 id="homeTitle">C1 小车</h1>
-              <p>武汉题库 · <span id="bankVersion">2026</span> 新规</p>
+              <p>武汉 · 题库版本 <span id="bankVersion">2026</span></p>
             </div>
             <nav class="subject-tabs" aria-label="考试科目">
               <button class="is-active" type="button" data-subject="k1"><b>科目一</b><span>理论考试</span></button>
@@ -86,6 +90,11 @@
               <div class="coach-entry-road" aria-hidden="true"><i class="road-line one"></i><i class="road-line two"></i><span class="entry-car">▰</span><em>40</em></div>
             </section>
 
+            <a class="advanced-coach-entry" href="simulator/">
+              <img src="assets/driving/training-preview.jpg" alt="城市道路与教练车三维场景" width="720" height="450" loading="lazy">
+              <div><span class="new-training-label">道路训练 · 增强版</span><h2>把驾驶知识带到路上</h2><p>驾驶舱与跟车视角，练习控速、转向和停车。</p><strong>进入三维训练 <span aria-hidden="true">↗</span></strong><small>首次进入需加载场景，建议使用 Wi-Fi</small></div>
+            </a>
+
             <section class="today-panel">
               <header><div><h2>今日练习</h2><p>答够 30 题完成今日目标</p></div><strong><span id="todayAnswered">0</span>/30</strong></header>
               <div class="today-bar"><i id="todayBar"></i></div>
@@ -122,6 +131,7 @@
               <footer class="question-actions">
                 <button id="previousQuestion" type="button">上一题</button>
                 <button id="openAnswerSheet" type="button">答题卡</button>
+                <button id="finishSessionMobile" type="button">结束</button>
                 <button class="primary" id="nextQuestion" type="button">下一题</button>
               </footer>
             </article>
@@ -333,6 +343,8 @@
     <footer><button id="openRulesFromCoach" type="button">查看法规数字总览</button><button class="primary" id="ackCoachSource" type="button">知道了</button></footer>
   </dialog>
   <div class="toast" id="toast" role="status"></div>
+
+  <noscript><div class="app-loading"><p>请开启浏览器 JavaScript，以使用题库和模拟训练。</p></div></noscript>
 
   <script type="module" src="system.js"></script>
 </body>

@@ -1,0 +1,27 @@
+; Woodcang driving practice. Web export is single threaded and static-host compatible.
+config_version=5
+
+[application]
+config/name="木仓科技 · 城市练车"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+config/description="Blender 场景与 Godot 驾驶练习，供驾驶操作认知训练。"
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+anti_aliasing/quality/msaa_3d=1
+environment/defaults/default_clear_color=Color(0.67, 0.8, 0.87, 1)
+
+[audio]
+driver/enable_input=false
+
+[input_devices]
+pointing/emulate_mouse_from_touch=false

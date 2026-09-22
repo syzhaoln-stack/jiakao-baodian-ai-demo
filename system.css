@@ -30,6 +30,10 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:3px so
 .app-loading{position:fixed;inset:0;z-index:1000;display:grid;place-content:center;justify-items:center;gap:14px;background:#fff}
 .app-loading .brand-mark{width:64px;height:64px;font-size:32px;box-shadow:0 12px 28px rgba(255,106,42,.25)}
 .app-loading p{margin:0;color:#7b8188;font-size:14px}
+.app-loading.has-error .brand-mark{background:var(--red)}
+.app-loading p{max-width:min(90vw,420px);text-align:center;line-height:1.7}
+.app-loading button{padding:12px 24px;border:0;border-radius:10px;color:#fff;background:var(--brand);cursor:pointer}
+.loading-coach-link{margin-top:12px;color:var(--blue);font-size:13px;text-underline-offset:4px}
 .brand-mark{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;color:#fff;background:var(--brand);font-weight:900}
 
 .jk-app{height:100%}
@@ -67,6 +71,21 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:3px so
 
 /* Home */
 .home-page{padding-bottom:42px}
+.advanced-coach-entry{display:grid;grid-column:1/-1;grid-template-columns:42% 1fr;overflow:hidden;min-height:214px;border:1px solid #dbe7ed;border-radius:18px;color:#203b49;background:#edf5f7;text-decoration:none}
+.advanced-coach-entry>img{width:100%;height:100%;max-height:290px;object-fit:cover;background:#d8e9ec}
+.advanced-coach-entry>div{align-self:center;padding:25px 28px}
+.new-training-label{font-size:12px;font-weight:700;color:#24707a;letter-spacing:.08em}
+.advanced-coach-entry h2{margin:10px 0;font-size:24px;letter-spacing:-.03em}
+.advanced-coach-entry p{margin:0 0 19px;font-size:13px;line-height:1.8;color:#5d7581}
+.advanced-coach-entry strong{display:inline-flex;gap:25px;align-items:center;padding:10px 16px;border-radius:8px;color:white;background:#245b6b;font-size:13px;transition:background .18s}
+.advanced-coach-entry:hover strong{background:#183f4b}
+.advanced-coach-entry small{display:block;margin-top:11px;color:#607985;font-size:11px}
+.question-media .media-retry{padding:10px;border:1px solid var(--line);border-radius:8px;background:white;color:var(--blue);cursor:pointer}
+#finishSessionMobile{display:none}
+.review-exam-button{padding:9px 13px;border:1px solid #f2d5c6;border-radius:8px;color:var(--brand-dark);background:#fff7f2;font-size:12px;cursor:pointer}
+@media(max-width:1000px){#finishSessionMobile{display:block}.advanced-coach-entry{margin-top:12px}.question-actions{flex-wrap:wrap}}
+@media(max-width:600px){.advanced-coach-entry{grid-template-columns:1fr}.advanced-coach-entry>img{height:175px;max-height:none}.advanced-coach-entry>div{padding:20px}.advanced-coach-entry h2{font-size:21px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 .subject-header{display:flex;align-items:end;justify-content:space-between;gap:36px;min-height:122px;padding:25px max(28px,calc((100% - 1180px)/2));border-bottom:1px solid var(--line);background:#fff}
 .subject-header>div{padding-bottom:3px;white-space:nowrap}
 .subject-header h1{margin:0;font-size:26px;letter-spacing:-.04em}

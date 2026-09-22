@@ -1,4 +1,4 @@
-﻿import { FirstPersonCoach } from "./coach3d.js";
+import { loadJSON, mediaSources } from "./data-loader.js";
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => Array.from(document.querySelectorAll(selector));
@@ -44,6 +44,7 @@ function defaultLearning() {
     favorite: [],
     answered: {},
     exams: [],
+    activeExam: null,
     totalAnswered: 0,
     totalCorrect: 0,
     bestStreak: 0,
@@ -54,11 +55,13 @@ function defaultLearning() {
 function loadLearning() {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-    if (!parsed) return defaultLearning();
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return defaultLearning();
     const merged = Object.assign(defaultLearning(), parsed);
     if (!merged.today || merged.today.date !== todayKey()) merged.today = { date: todayKey(), answered: 0, correct: 0, streak: 0 };
-    merged.wrong = Array.from(new Set((merged.wrong || []).map(String)));
-    merged.favorite = Array.from(new Set((merged.favorite || []).map(String)));
+    merged.wrong = Array.from(new Set((Array.isArray(merged.wrong) ? merged.wrong : []).map(String)));
+    merged.favorite = Array.from(new Set((Array.isArray(merged.favorite) ? merged.favorite : []).map(String)));
+    merged.exams = Array.isArray(merged.exams) ? merged.exams : [];
+    if (!merged.answered || typeof merged.answered !== "object" || Array.isArray(merged.answered)) merged.answered = {};
     return merged;
   } catch {
     return defaultLearning();
@@ -66,9 +69,19 @@ function loadLearning() {
 }
 
 let learning = loadLearning();
+let storageWarningShown = false;
 
 function saveLearning() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(learning));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(learning));
+    return true;
+  } catch {
+    if (!storageWarningShown && $("#toast")) {
+      storageWarningShown = true;
+      toast("浏览器存储不可用，本次可继续答题；刷新后进度可能无法保留");
+    }
+    return false;
+  }
 }
 
 const session = {
@@ -79,11 +92,70 @@ const session = {
   selected: new Set(),
   locked: false,
   results: new Map(),
+  drafts: new Map(),
   answered: 0,
   correct: 0,
   timer: 0,
-  examEndAt: 0
+  examEndAt: 0,
+  examId: null,
+  examFinished: false
 };
+
+function persistExamSession() {
+  if (session.mode !== "exam" || session.examFinished || !session.examId) return;
+  learning.activeExam = {
+    id: session.examId,
+    queue: session.queue.map(question => String(question.questionId)),
+    index: session.index,
+    results: Array.from(session.results),
+    drafts: Array.from(session.drafts),
+    examEndAt: session.examEndAt
+  };
+  saveLearning();
+}
+
+function restoreExamSession() {
+  const exam = learning.activeExam;
+  if (!exam) return false;
+  if (!exam.id || !Array.isArray(exam.queue) || !exam.queue.length || !Number.isFinite(exam.examEndAt) ||
+      exam.queue.some(id => !findQuestion(id)) || learning.exams.some(item => item.id === exam.id)) {
+    learning.activeExam = null;
+    saveLearning();
+    return false;
+  }
+  session.mode = "exam";
+  session.title = "科目一模拟考试";
+  session.queue = exam.queue.map(findQuestion);
+  session.index = clamp(Number.isInteger(exam.index) ? exam.index : 0, 0, session.queue.length - 1);
+  session.results = new Map();
+  for (const entry of Array.isArray(exam.results) ? exam.results : []) {
+    if (!Array.isArray(entry)) continue;
+    const [index, result] = entry;
+    if (!Number.isInteger(index) || !session.queue[index] || !Array.isArray(result?.selected) || !result.selected.length) continue;
+    const selected = Array.from(new Set(result.selected)).filter(value => Number.isInteger(value) && value >= 0 && value < questionOptions(session.queue[index]).length).sort((a, b) => a - b);
+    if (selected.length) session.results.set(index, { selected, correct: sameAnswer(selected, answerIndexes(session.queue[index])) });
+  }
+  session.drafts = new Map((Array.isArray(exam.drafts) ? exam.drafts : []).filter(entry => Array.isArray(entry) && Number.isInteger(entry[0]) && session.queue[entry[0]] && Array.isArray(entry[1])));
+  session.answered = session.results.size;
+  session.correct = Array.from(session.results.values()).filter(result => result.correct).length;
+  session.selected = new Set();
+  session.locked = false;
+  session.examId = exam.id;
+  session.examFinished = false;
+  session.examEndAt = exam.examEndAt;
+  $("#practiceTitle").textContent = session.title;
+  $("#modeBadge").textContent = session.title;
+  clearInterval(session.timer);
+  session.timer = setInterval(updateExamClock, 1000);
+  navigate("practice");
+  renderQuestion();
+  updateExamClock();
+  return true;
+}
+
+function openExam() {
+  if (!restoreExamSession()) $("#examDialog").showModal();
+}
 
 function questionOptions(question) {
   return LETTERS.map(letter => question[`option${letter}`]).filter(Boolean);
@@ -192,7 +264,7 @@ function speak(text) {
 
 function navigate(route) {
   if (!$( `[data-page="${route}"]`)) route = "home";
-  if (currentRoute === "practice" && route !== "practice" && session.mode === "exam") clearInterval(session.timer);
+  if (currentRoute === "practice" && route !== "practice") persistExamSession();
   if (currentRoute === "coach" && route !== "coach") {
     coach?.stop();
     sound.stopEngine();
@@ -219,7 +291,7 @@ function renderHome() {
   const best = learning.exams.length ? Math.max(...learning.exams.map(item => item.score)) : null;
   $("#bestExamScore").textContent = best === null ? "--" : best;
   $("#examRing").style.setProperty("--progress", `${(best || 0) / 100 * 360}deg`);
-  $("#examHint").textContent = best === null ? "100 题 · 45 分钟" : `历史最高 ${best} 分`;
+  $("#examHint").textContent = learning.activeExam ? "考试进行中 · 点击继续" : (best === null ? "100 题 · 45 分钟" : `历史最高 ${best} 分`);
   $("#homeWrongCount").textContent = `${learning.wrong.length} 道`;
   $("#homeFavoriteCount").textContent = `${learning.favorite.length} 道`;
   $("#homeExamCount").textContent = `${learning.exams.length} 次`;
@@ -291,18 +363,22 @@ function startRulesPractice() {
 function handleAction(action) {
   if (action === "sequence") startPractice("sequence");
   if (action === "random") startPractice("random");
-  if (action === "exam") $("#examDialog").showModal();
+  if (action === "exam") openExam();
   if (action === "rules-practice") startRulesPractice();
 }
 
 function startPractice(mode, options = {}) {
-  clearInterval(session.timer);
+  persistExamSession();
+  if (mode === "exam" && restoreExamSession()) return;
   session.mode = mode;
   session.results = new Map();
+  session.drafts = new Map();
   session.answered = 0;
   session.correct = 0;
   session.selected = new Set();
   session.locked = false;
+  session.examId = null;
+  session.examFinished = false;
   if (mode === "sequence") {
     session.title = "顺序练习";
     session.queue = bank;
@@ -316,6 +392,8 @@ function startPractice(mode, options = {}) {
     session.queue = shuffle(bank).slice(0, 100);
     session.index = 0;
     session.examEndAt = Date.now() + 45 * 60 * 1000;
+    session.examId = typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    clearInterval(session.timer);
     session.timer = setInterval(updateExamClock, 1000);
   } else if (mode === "node") {
     session.title = options.title || "专项练习";
@@ -340,6 +418,7 @@ function startPractice(mode, options = {}) {
   $("#practiceSubtitle").textContent = mode === "exam" ? "剩余 45:00" : "C1 小车 · 科目一";
   navigate("practice");
   renderQuestion();
+  if (mode === "exam") updateExamClock();
 }
 
 function currentQuestion() {
@@ -349,7 +428,7 @@ function currentQuestion() {
 function renderQuestion() {
   const question = currentQuestion();
   if (!question) return;
-  session.selected = new Set(session.results.get(session.index)?.selected || []);
+  session.selected = new Set(session.results.get(session.index)?.selected || session.drafts.get(session.index) || []);
   session.locked = session.results.has(session.index);
   const options = questionOptions(question);
   $("#questionPosition").textContent = session.index + 1;
@@ -391,8 +470,10 @@ function renderQuestion() {
   if (result && session.mode !== "exam") renderAnalysis(question, result);
   $("#previousQuestion").disabled = session.index === 0;
   $("#nextQuestion").textContent = session.index === session.queue.length - 1 ? (session.mode === "exam" ? "交卷" : "完成") : "下一题";
+  if ($("#finishSessionMobile")) $("#finishSessionMobile").textContent = session.mode === "exam" ? "交卷" : "结束";
   updateSessionSummary();
   renderQuestionNavigator();
+  persistExamSession();
 }
 
 function renderQuestionMedia(question) {
@@ -402,18 +483,29 @@ function renderQuestionMedia(question) {
   holder.hidden = !path;
   if (!path) return;
   const source = `${MEDIA_ROOT}${String(path).replaceAll("\\", "/")}`;
+  const sources = mediaSources(source);
+  const element = document.createElement(/\.mp4$/i.test(path) ? "video" : "img");
+  let attempt = 0;
+  element.addEventListener("error", () => {
+    if (++attempt < sources.length) { element.src = sources[attempt]; return; }
+    if (!element.isConnected || holder.querySelector(".media-retry")) return;
+    const retry = document.createElement("button");
+    retry.type = "button"; retry.className = "media-retry";
+    retry.textContent = "配图或视频加载失败，点击重试";
+    retry.onclick = () => renderQuestionMedia(question);
+    holder.appendChild(retry);
+  });
   if (/\.mp4$/i.test(path)) {
-    const video = document.createElement("video");
-    video.src = source; video.controls = true; video.playsInline = true; video.preload = "metadata";
-    holder.appendChild(video);
+    element.controls = true; element.playsInline = true; element.preload = "metadata";
   } else {
-    const image = document.createElement("img");
-    image.src = source; image.alt = "题目配图"; image.loading = "eager";
-    holder.appendChild(image);
+    element.alt = "题目配图"; element.loading = "eager"; element.decoding = "async";
   }
+  element.src = source;
+  holder.appendChild(element);
 }
 
 function chooseAnswer(index) {
+  if (session.mode === "exam" && (session.examFinished || Date.now() >= session.examEndAt)) { updateExamClock(); return; }
   if (session.locked) return;
   const question = currentQuestion();
   if (question.optionType === 2) {
@@ -421,6 +513,8 @@ function chooseAnswer(index) {
     else session.selected.add(index);
     $$("#answerOptions .answer-option").forEach(button => button.classList.toggle("is-selected", session.selected.has(Number(button.dataset.index))));
     $("#confirmMultiple").disabled = session.selected.size === 0;
+    session.drafts.set(session.index, Array.from(session.selected));
+    persistExamSession();
   } else {
     session.selected = new Set([index]);
     submitAnswer();
@@ -432,6 +526,7 @@ function sameAnswer(a, b) {
 }
 
 function submitAnswer() {
+  if (session.mode === "exam" && (session.examFinished || Date.now() >= session.examEndAt)) { updateExamClock(); return; }
   if (session.locked || !session.selected.size) return;
   const question = currentQuestion();
   const selected = Array.from(session.selected).sort((a, b) => a - b);
@@ -439,13 +534,20 @@ function submitAnswer() {
   const correct = sameAnswer(selected, correctAnswer);
   const result = { selected, correct };
   session.results.set(session.index, result);
+  session.drafts.delete(session.index);
   session.locked = true;
   session.answered += 1;
   if (correct) session.correct += 1;
   recordAnswer(question, selected, correct);
   if (session.mode === "exam") {
+    persistExamSession();
     sound.tone(500, .025, "sine", .006);
-    setTimeout(() => moveQuestion(1), 170);
+    const answeredIndex = session.index;
+    const examId = session.examId;
+    renderQuestion();
+    setTimeout(() => {
+      if (currentRoute === "practice" && session.mode === "exam" && !session.examFinished && session.examId === examId && session.index === answeredIndex) moveQuestion(1);
+    }, 170);
   } else {
     if (correct) sound.correct(); else sound.wrong();
     renderQuestion();
@@ -453,6 +555,7 @@ function submitAnswer() {
 }
 
 function recordAnswer(question, selected, correct) {
+  if (learning.today.date !== todayKey()) learning.today = { date: todayKey(), answered: 0, correct: 0, streak: 0 };
   const id = String(question.questionId);
   learning.answered[id] = { correct, selected, at: Date.now() };
   learning.totalAnswered += 1;
@@ -480,8 +583,8 @@ function renderAnalysis(question, result) {
 
 function updateSessionSummary() {
   $("#sessionAnswered").textContent = session.answered;
-  $("#sessionCorrect").textContent = session.correct;
-  $("#sideCorrectRate").textContent = session.answered ? `${Math.round(session.correct / session.answered * 100)}%` : "--";
+  $("#sessionCorrect").textContent = session.mode === "exam" ? "--" : session.correct;
+  $("#sideCorrectRate").textContent = session.mode !== "exam" && session.answered ? `${Math.round(session.correct / session.answered * 100)}%` : "--";
 }
 
 function navigatorRange() {
@@ -500,7 +603,10 @@ function renderQuestionNavigator() {
     button.type = "button";
     button.textContent = index + 1;
     const result = session.results.get(index);
-    if (result) button.classList.add(result.correct ? "is-correct" : "is-wrong", "is-answered");
+    if (result) {
+      button.classList.add("is-answered");
+      if (session.mode !== "exam") button.classList.add(result.correct ? "is-correct" : "is-wrong");
+    }
     if (index === session.index) button.classList.add("is-current");
     button.addEventListener("click", () => { session.index = index; renderQuestion(); $("#answerSheetDialog").close(); });
     target.appendChild(button);
@@ -515,9 +621,7 @@ function moveQuestion(direction) {
     toast("请先选择答案");
     return;
   }
-  if (direction > 0 && session.mode === "exam" && !session.locked) {
-    session.results.set(session.index, { selected: [], correct: false });
-  }
+  if (session.mode === "exam" && (session.examFinished || Date.now() >= session.examEndAt)) { updateExamClock(); return; }
   const next = session.index + direction;
   if (next < 0) return;
   if (next >= session.queue.length) {
@@ -530,35 +634,65 @@ function moveQuestion(direction) {
 }
 
 function updateExamClock() {
-  const remaining = Math.max(0, session.examEndAt - Date.now());
+  const exam = learning.activeExam;
+  if (!exam) { clearInterval(session.timer); return; }
+  const remaining = Math.max(0, exam.examEndAt - Date.now());
   const totalSeconds = Math.ceil(remaining / 1000);
   const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
   const seconds = String(totalSeconds % 60).padStart(2, "0");
-  $("#practiceSubtitle").textContent = `剩余 ${minutes}:${seconds}`;
-  if (!remaining) finishSession();
+  if (session.mode === "exam" && session.examId === exam.id) $("#practiceSubtitle").textContent = `剩余 ${minutes}:${seconds}`;
+  if (!remaining) completeExam(exam);
 }
 
 function finishSession() {
-  clearInterval(session.timer);
   if (session.mode === "exam") {
-    const score = session.correct;
-    learning.exams.unshift({ score, correct: session.correct, answered: session.answered, at: Date.now() });
-    learning.exams = learning.exams.slice(0, 30);
-    saveLearning();
-    showExamResult(score);
+    if (session.examFinished) return;
+    const unanswered = session.queue.length - session.results.size;
+    if (Date.now() < session.examEndAt && !window.confirm(`本次考试还有 ${unanswered} 道题未作答。未答题按错误计分，确定交卷？`)) return;
+    persistExamSession();
+    completeExam(learning.activeExam);
   } else {
     toast(`本次答对 ${session.correct} / ${session.answered || 0} 题`);
     navigate("home");
   }
 }
 
-function showExamResult(score) {
+function completeExam(exam) {
+  if (!exam || learning.exams.some(item => item.id === exam.id)) return;
+  clearInterval(session.timer);
+  const results = new Map(exam.results || []);
+  const wrongIds = [];
+  let correct = 0;
+  let answered = 0;
+  exam.queue.forEach((id, index) => {
+    const result = results.get(index);
+    if (result?.selected?.length) answered += 1;
+    if (result?.correct) correct += 1;
+    else {
+      wrongIds.push(String(id));
+      if (!learning.wrong.includes(String(id))) learning.wrong.push(String(id));
+    }
+  });
+  const result = { id: exam.id, score: correct, correct, answered, unanswered: exam.queue.length - answered, wrongIds, at: Date.now() };
+  learning.exams.unshift(result);
+  learning.exams = learning.exams.slice(0, 30);
+  learning.activeExam = null;
+  if (session.examId === exam.id) session.examFinished = true;
+  saveLearning();
+  renderHome();
+  showExamResult(result);
+}
+
+function showExamResult(result) {
+  const { score, correct, unanswered, wrongIds } = result;
   const dialog = document.createElement("dialog");
   dialog.className = "exam-dialog";
-  dialog.innerHTML = `<div class="exam-dialog-icon">${score >= 90 ? "过" : "练"}</div><h2>${score >= 90 ? "考试通过" : "继续加油"}</h2><p>本次模拟考试 ${score} 分，答对 ${session.correct} 题。</p><dl><div><dt>得分</dt><dd>${score}</dd></div><div><dt>答对</dt><dd>${session.correct}</dd></div><div><dt>及格线</dt><dd>90</dd></div></dl><div><button type="button" data-close>返回首页</button><button class="primary" type="button" data-record>查看成绩</button></div>`;
+  dialog.innerHTML = `<div class="exam-dialog-icon">${score >= 90 ? "过" : "练"}</div><h2>${score >= 90 ? "考试通过" : "继续加油"}</h2><p>本次模拟考试 ${score} 分，答对 ${correct} 题；未答 ${unanswered} 题，已按错误计分。</p><dl><div><dt>得分</dt><dd>${score}</dd></div><div><dt>答对</dt><dd>${correct}</dd></div><div><dt>及格线</dt><dd>90</dd></div></dl><div><button type="button" data-close>返回首页</button><button type="button" data-record>查看成绩</button>${wrongIds.length ? '<button class="primary" type="button" data-review>复习本卷错题</button>' : ""}</div>`;
   document.body.appendChild(dialog);
   dialog.querySelector("[data-close]").addEventListener("click", () => { dialog.close(); dialog.remove(); navigate("home"); });
   dialog.querySelector("[data-record]").addEventListener("click", () => { dialog.close(); dialog.remove(); recordTab = "score"; navigate("records"); });
+  dialog.querySelector("[data-review]")?.addEventListener("click", () => { dialog.close(); dialog.remove(); startPractice("node", { title: "本卷错题复习", ids: wrongIds }); });
+  dialog.addEventListener("cancel", event => { event.preventDefault(); dialog.close(); dialog.remove(); navigate("home"); });
   dialog.showModal();
 }
 
@@ -617,6 +751,14 @@ function renderRecords() {
       const article = document.createElement("article");
       article.className = `score-item${exam.score < 90 ? " is-fail" : ""}`;
       article.innerHTML = `<strong>${exam.score}分</strong><div><p>${exam.score >= 90 ? "考试通过" : "未达到及格线"}</p><small>答对 ${exam.correct} 题 · 已答 ${exam.answered} 题</small></div><time>${new Date(exam.at).toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</time>`;
+      if (Array.isArray(exam.wrongIds) && exam.wrongIds.length) {
+        const review = document.createElement("button");
+        review.type = "button";
+        review.className = "review-exam-button";
+        review.textContent = "复习错题";
+        review.addEventListener("click", () => startPractice("node", { title: "本卷错题复习", ids: exam.wrongIds }));
+        article.appendChild(review);
+      }
       list.appendChild(article);
     });
     holder.appendChild(list);
@@ -664,14 +806,27 @@ function renderSearch(query) {
   });
 }
 
-function enterCoach() {
+let coachLoading;
+async function enterCoach() {
   document.body.classList.add("is-coach");
-  if (!coach) initCoach();
-  coach.start();
-  coach.resize();
+  try {
+    if (!coach) {
+      showCoachMessage("正在准备练车场景…");
+      coachLoading ||= import("./coach3d.js").then(({ FirstPersonCoach }) => initCoach(FirstPersonCoach));
+      await coachLoading;
+    }
+    if (currentRoute === "coach") { coach.start(); coach.resize(); }
+    return coach;
+  } catch {
+    coachLoading = null;
+    $("#coachTaskTitle").textContent = "练车场景未能启动";
+    $("#coachTaskText").textContent = "请开启浏览器硬件加速，或换用支持 WebGL 的浏览器后重试。";
+    showCoachMessage("可退出后重试，题库仍可正常练习");
+    return null;
+  }
 }
 
-function initCoach() {
+function initCoach(FirstPersonCoach) {
   coach = new FirstPersonCoach($("#coachScene"), {
     onState: renderCoachState,
     onTask: task => {
@@ -795,7 +950,7 @@ function bindCoachControls() {
 }
 
 function handleCoachKey(event, pressed) {
-  if (currentRoute !== "coach" || /INPUT|TEXTAREA/.test(event.target.tagName)) return;
+  if (currentRoute !== "coach" || !coach || (pressed && document.querySelector("dialog[open]")) || (pressed && /INPUT|TEXTAREA/.test(event.target.tagName))) return;
   const key = event.key.toLowerCase();
   const map = { w: "throttle", arrowup: "throttle", s: "brake", arrowdown: "brake", " ": "brake", a: "left", arrowleft: "left", d: "right", arrowright: "right" };
   if (map[key]) {
@@ -820,24 +975,32 @@ function bindAppEvents() {
       navigate(route.dataset.route);
     }
   });
-  $$("[data-subject]").forEach(button => button.addEventListener("click", () => {
+  $$("[data-subject]").forEach(button => button.addEventListener("click", async () => {
     $$("[data-subject]").forEach(item => item.classList.toggle("is-active", item === button));
     if (button.dataset.subject === "k2" || button.dataset.subject === "k3") {
       navigate("coach");
       const scenario = button.dataset.subject === "k2" ? "park" : "intersection";
       $$("[data-scenario]").forEach(item => item.classList.toggle("is-active", item.dataset.scenario === scenario));
-      coach.reset(scenario);
+      const readyCoach = await enterCoach();
+      if (readyCoach && currentRoute === "coach") readyCoach.reset(scenario);
     }
   }));
   $("#continueSequence").addEventListener("click", () => startPractice("sequence"));
   $("#continueSequence").addEventListener("keydown", event => { if (event.key === "Enter") startPractice("sequence"); });
-  $("#continueExam").addEventListener("click", () => $("#examDialog").showModal());
+  $("#continueExam").addEventListener("click", openExam);
+  $("#continueExam").addEventListener("keydown", event => { if (event.key === "Enter") openExam(); });
   $("#cancelExam").addEventListener("click", () => $("#examDialog").close());
   $("#startExam").addEventListener("click", () => { $("#examDialog").close(); startPractice("exam"); });
   $("#confirmMultiple").addEventListener("click", submitAnswer);
   $("#previousQuestion").addEventListener("click", () => moveQuestion(-1));
   $("#nextQuestion").addEventListener("click", () => moveQuestion(1));
   $("#finishSession").addEventListener("click", finishSession);
+  $("#finishSessionMobile")?.addEventListener("click", finishSession);
+  window.addEventListener("pagehide", persistExamSession);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") persistExamSession();
+    else updateExamClock();
+  });
   $("#favoriteQuestion").addEventListener("click", () => {
     const question = currentQuestion(); if (!question) return;
     const id = String(question.questionId);
@@ -885,22 +1048,32 @@ function bindAppEvents() {
 }
 
 async function initialize() {
+  const loading = $("#appLoading");
+  const retry = $("#retryLoading");
+  retry.hidden = true;
+  loading.classList.remove("has-error");
+  const onStatus = message => { $("#appLoading p").textContent = message; };
+  onStatus("正在读取题库，首次打开可能需要几秒…");
   try {
-    const [bankResponse, mediaResponse, graphResponse] = await Promise.all([fetch(BANK_URL), fetch(MEDIA_URL), fetch(GRAPH_URL)]);
-    if (!bankResponse.ok || !mediaResponse.ok || !graphResponse.ok) throw new Error("题库文件加载失败");
-    [bank, mediaMap, graph] = await Promise.all([bankResponse.json(), mediaResponse.json(), graphResponse.json()]);
+    [bank, mediaMap, graph] = await Promise.all([
+      loadJSON(BANK_URL, { cache: DATA_ROOT === REMOTE_DATA_ROOT, onStatus, validate: value => Array.isArray(value) && value.length > 0 && value.every(q => q.questionId != null && typeof q.question === "string") }),
+      loadJSON(MEDIA_URL, { cache: DATA_ROOT === REMOTE_DATA_ROOT, validate: value => value && typeof value === "object" && !Array.isArray(value) }),
+      loadJSON(GRAPH_URL, { validate: value => value?.meta && Array.isArray(value.nodes) })
+    ]);
     questionIndex = new Map(bank.map(question => [String(question.questionId), question]));
-    $("#bankVersion").textContent = String(graph.meta.bankVersion || "2026").slice(0, 4);
+    $("#bankVersion").textContent = String(graph.meta.bankVersion || "2026").slice(0, 8).replace(/^(\d{4})(\d{2})(\d{2})$/, "$1.$2.$3");
     bindAppEvents();
     renderHome();
     renderKnowledge();
-    $("#appLoading").remove();
+    loading.remove();
     $("#jkApp").hidden = false;
     document.documentElement.dataset.ready = "true";
+    restoreExamSession();
   } catch (error) {
-    $("#appLoading p").textContent = `${error.message}，请通过本地 HTTP 服务打开`;
-    $("#appLoading .brand-mark").style.background = "#ef4d4d";
-    throw error;
+    onStatus(error.message);
+    loading.classList.add("has-error");
+    retry.hidden = false;
+    retry.onclick = initialize;
   }
 }
 

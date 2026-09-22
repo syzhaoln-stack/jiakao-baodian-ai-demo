@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#12282b">
+  <link rel="icon" href="../favicon.svg">
+  <title>木仓科技 · 城市驾驶练习</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:#f7fbf9;background:#12282b;--muted:#c2d4d0;--accent:#a9f0c5;--panel:rgba(16,35,39,.92)}
+    *{box-sizing:border-box}body{margin:0;overflow:hidden}button,select,a{-webkit-tap-highlight-color:transparent}button,select{font:inherit}button,a,select{touch-action:manipulation}button{cursor:pointer}button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #d9ffb3;outline-offset:4px}button:disabled{opacity:.5;cursor:wait}a{color:inherit;text-decoration:none}#canvas{position:fixed;inset:0;width:100%;height:100%;display:block;outline:0;touch-action:none}
+    .header{position:fixed;left:20px;right:20px;top:max(18px,env(safe-area-inset-top));display:flex;align-items:center;gap:12px;z-index:2}.brand{font-size:15px;font-weight:750;letter-spacing:.06em}.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.15em;font-weight:500;margin-top:4px}.back,.tool{border:1px solid #6d8987;border-radius:12px;background:var(--panel);color:white;padding:12px 15px;min-height:44px}.back{display:flex;align-items:center;gap:8px;font-size:13px}.spacer{flex:1}.tool{font-size:13px}.tool:hover,.back:hover{background:#294649}.mission{position:fixed;top:94px;left:20px;width:min(370px,calc(100% - 40px));padding:18px 20px;background:var(--panel);border:1px solid #63807b;border-radius:18px;z-index:2;box-shadow:0 6px 26px #10232812}.eyebrow{font-size:10px;letter-spacing:.2em;color:var(--accent);font-weight:700}.mission select{width:100%;border:0;border-bottom:1px solid #526e6a;border-radius:0;background:transparent;color:#fff;padding:10px 0;font-size:19px;font-weight:650;outline-offset:3px}.mission option{background:#173136}.step{margin:13px 0 7px;font-size:15px;font-weight:650}.hint{font-size:12px;line-height:1.7;color:var(--muted);min-height:40px;margin:0}.signal{position:fixed;top:94px;right:20px;border-radius:16px;background:var(--panel);padding:13px 17px;display:flex;align-items:center;gap:13px;border:1px solid #63807b;z-index:2}.lamp{height:13px;width:13px;border-radius:50%;background:#ff6f6f;box-shadow:0 0 15px #ff6f6f55}.traffic-label{font-weight:650;font-size:15px}.traffic-sub{font-size:11px;color:var(--muted);margin-top:3px}.dashboard{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;align-items:center;gap:22px;padding:16px 24px;background:var(--panel);border:1px solid #63807b;border-radius:22px;z-index:2;min-width:266px;justify-content:center}.speed{font-variant-numeric:tabular-nums;font-size:46px;line-height:1;font-weight:650;letter-spacing:-.04em}.unit{font-size:10px;letter-spacing:.15em;color:var(--muted);margin-top:5px}.rule{height:42px;border-left:1px solid #526e6a}.score{font-size:20px;font-variant-numeric:tabular-nums}.limit{border:3px solid #ff8383;border-radius:50%;height:40px;width:40px;background:#fff;color:#213d3e;font-size:18px;display:grid;place-items:center;font-weight:800}.controls{position:fixed;bottom:max(24px,env(safe-area-inset-bottom));display:flex;gap:10px;z-index:3}.controls.left{left:20px}.controls.right{right:20px}.drive{border:1px solid #70928a;background:var(--panel);color:white;border-radius:18px;min-width:78px;min-height:78px;user-select:none;-webkit-user-select:none;touch-action:none;font-size:21px;font-weight:650;box-shadow:0 4px 18px #18392b1a}.drive small{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-top:5px}.drive.active,.drive:active{background:#a9f0c5;color:#17382b;transform:translateY(2px)}.drive.active small,.drive:active small{color:#17382b}.pedal{min-width:88px}.pedal.throttle{background:#d0f4aa;color:#1c3b30;border-color:#d0f4aa}.pedal.throttle small{color:#385c48}.turns{position:fixed;bottom:126px;left:20px;display:flex;gap:8px;z-index:3}.turn{padding:9px 12px;border:1px solid #6d8987;border-radius:10px;background:var(--panel);color:#d2dfdb;min-height:44px;font-size:12px}.turn.active{background:#d0f4aa;color:#1c3b30}.keyboard{position:fixed;right:20px;bottom:125px;font-size:11px;background:var(--panel);border-radius:9px;padding:10px 12px;color:#dce9e3;z-index:2}.paused{position:fixed;left:50%;top:47%;transform:translate(-50%,-50%);padding:18px 26px;background:var(--panel);border:1px solid #a9f0c5;border-radius:16px;z-index:3;text-align:center}.paused strong{display:block;font-size:22px}.paused p{font-size:12px;color:var(--muted);margin-bottom:0}.hidden{display:none!important}.overlay{position:fixed;inset:0;background:radial-gradient(ellipse at 60% 25%,#2f5851,#142c2d 65%);z-index:10;display:grid;place-items:center;padding:24px;overflow:auto}.welcome{max-width:620px;width:100%}.welcome .tag{color:#b8edba;font-size:11px;letter-spacing:.18em}.welcome h1{font-size:clamp(30px,5vw,50px);line-height:1.2;letter-spacing:-.02em;margin:20px 0}.welcome h1 span{color:#ccf2ad}.welcome p{font-size:14px;color:#c6d7cf;line-height:1.9}.chips{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0}.chips span{border:1px solid #587872;border-radius:999px;padding:7px 11px;font-size:12px;color:#e2ece5}.start{margin-top:10px;background:#cdf2ab;color:#203b2d;border:0;padding:16px 24px;font-weight:750;font-size:15px;border-radius:13px;min-width:180px;min-height:52px}.load{height:5px;overflow:hidden;border-radius:4px;background:#46625c;margin-top:24px}.load>i{height:100%;display:block;background:#cdf2ab;width:0;transition:width .2s}.note{font-size:11px!important;opacity:.85}.welcome .return{display:inline-block;font-size:13px;border-bottom:1px solid #80958b;padding:5px 0;margin-left:20px}#loading-text{font-size:12px;color:#d7e5de;margin-top:12px;min-height:24px}.legend{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:22px 0}.legend div{font-size:12px;padding:11px 13px;border-radius:10px;background:#ffffff0b;color:#d9e7df}.legend b{display:inline-block;min-width:62px;color:#fff}#error{color:#ffe0cc}.help-modal{max-width:480px;background:#173235;border:1px solid #66827b;color:#f7fbf9;border-radius:18px;padding:24px;box-shadow:0 20px 80px #0008}.help-modal::backdrop{background:#071f22a8}.help-modal h2{margin-top:0}.help-modal p{color:#d0ddd5;font-size:13px;line-height:1.8}.help-modal button{float:right}.help-modal .legend{grid-template-columns:1fr}
+    @media(max-width:760px){.header{left:12px;right:12px;gap:7px;top:max(12px,env(safe-area-inset-top))}.brand{display:none}.tool,.back{padding:10px 11px;font-size:12px}.mission{top:76px;left:12px;width:calc(100% - 145px);padding:13px 14px;border-radius:14px}.mission select{font-size:16px;padding:7px 0}.step{font-size:12px;line-height:1.5;margin:9px 0 3px}.hint{font-size:11px;min-height:38px;line-height:1.5}.signal{top:76px;right:12px;padding:12px 10px;gap:8px;border-radius:12px}.traffic-label{font-size:13px}.traffic-sub{font-size:10px}.dashboard{bottom:124px;padding:11px 17px;min-width:230px;gap:17px;border-radius:16px}.speed{font-size:35px}.score{font-size:18px}.limit{height:35px;width:35px;font-size:16px}.controls{bottom:max(18px,env(safe-area-inset-bottom));gap:8px}.controls.left{left:12px}.controls.right{right:12px}.drive{min-width:65px;min-height:76px;border-radius:16px}.pedal{min-width:73px}.turns{left:12px;bottom:205px;gap:6px}.turn{font-size:11px;padding:8px 10px}.keyboard{display:none}.eyebrow{font-size:9px;letter-spacing:.1em}.paused{top:48%;padding:15px 20px;width:230px}.paused strong{font-size:19px}.overlay{padding:25px}.welcome p{font-size:13px}.legend{gap:6px}.legend div{font-size:11px;padding:9px}.legend b{min-width:50px}}
+    @media(max-height:540px) and (min-width:620px){.header{top:10px;left:14px;right:14px}.brand{display:none}.mission{top:68px;width:290px;left:14px;padding:11px 14px}.mission select{font-size:16px;padding:6px 0}.step{margin:8px 0 4px;font-size:12px}.hint{font-size:11px;min-height:32px}.signal{top:68px;right:14px}.drive{min-height:63px;min-width:70px}.controls{bottom:14px}.dashboard{bottom:14px;min-width:230px;padding:10px 20px}.speed{font-size:34px}.turns{bottom:89px;left:auto;right:14px}.keyboard{display:none}.welcome h1{font-size:29px;margin:12px 0}.welcome p{margin:8px 0;line-height:1.6}.welcome .legend{display:none}.chips{margin:12px 0}.start{padding:11px 20px;min-height:44px}.load{margin-top:15px}}
+    @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+  </style>
+
+</head>
+<body>
+  <canvas id="canvas" tabindex="0" aria-label="城市驾驶三维训练场景，使用 W S A D 控制车辆"></canvas>
+  <header class="header">
+    <a class="back" href="../" aria-label="返回木仓科技题库">← 返回题库</a>
+    <div class="brand">木仓科技<small>CITY DRIVING LAB</small></div>
+    <div class="spacer"></div>
+    <button class="tool" id="camera" title="C 键切换视角">驾驶视角</button>
+    <button class="tool" id="pause" title="P 键暂停">暂停</button>
+    <button class="tool" id="reset" title="R 键重新开始">重置</button>
+    <button class="tool" id="help" aria-label="操作帮助">?</button>
+  </header>
+  <section class="mission" aria-label="当前训练任务">
+    <div class="eyebrow">城市道路 · 操作认知练习</div>
+    <select id="mission" aria-label="选择训练项目"><option value="junction">路口停车与通行</option><option value="parking">靠边停车练习</option><option value="cruise">自由驾驶体验</option></select>
+    <p id="step" class="step">01 / 停止线前平稳停车</p><p class="hint" id="hint">轻踩油门，观察路口红绿灯。</p>
+  </section>
+  <div class="signal"><i class="lamp" id="lamp"></i><div><div class="traffic-label" id="traffic">红灯 · 停车</div><div class="traffic-sub"><span id="countdown">12</span> 秒后切换</div></div></div>
+  <div class="turns"><button class="turn" id="signal_left" aria-pressed="false">← 左转灯 Q</button><button class="turn" id="signal_right" aria-pressed="false">右转灯 E →</button></div>
+  <div class="controls left"><button class="drive" data-drive="left" aria-label="向左转向">←<small>A / 左转</small></button><button class="drive" data-drive="right" aria-label="向右转向">→<small>D / 右转</small></button></div>
+  <div class="dashboard" aria-label="行车仪表"><div><div class="speed" id="speed">0</div><div class="unit">KM / H</div></div><div class="rule"></div><div><div class="score"><span id="score">100</span></div><div class="unit">训练分</div></div><div class="limit" title="训练限速 40 km/h">40</div></div>
+  <div class="keyboard">W / S 油门刹车　A / D 转向　C 切换视角</div>
+  <div class="controls right"><button class="drive pedal" data-drive="brake" aria-label="刹车">刹车<small>S / 空格</small></button><button class="drive pedal throttle" data-drive="throttle" aria-label="油门">油门<small>W / 加速</small></button></div>
+  <div class="paused hidden" id="paused" role="status"><strong id="paused-title">训练已暂停</strong><p id="paused-copy">点击右上方「继续」恢复驾驶</p></div>
+  <div class="overlay" id="intro">
+    <div class="welcome">
+      <div class="tag">MUCANG · CITY DRIVING LAB</div>
+      <h1>进入城市，<br>练习<span>驾驶。</span></h1>
+      <p>在三维城市里练习路口观察、平稳制动与靠边停车。<br>切换驾驶视角，感受车道位置与停止线距离。</p>
+      <div class="chips"><span>双视角切换</span><span>实时操作提示</span><span>手机触控驾驶</span></div>
+      <div class="legend"><div><b>W / S</b> 油门 / 刹车</div><div><b>A / D</b> 向左 / 向右</div><div><b>Q / E</b> 左 / 右转向灯</div><div><b>C / R</b> 视角 / 重置</div></div>
+      <button id="start" class="start">进入城市，开始练习 →</button><a class="return" href="../">返回题库</a>
+      <div id="progress" class="load hidden"><i id="progress-bar"></i></div>
+      <div id="loading-text">首次加载约 40 MB；手机横屏视野更好。</div>
+      <p id="error" class="hidden" role="alert"></p>
+      <p class="note">这是驾驶操作认知演示；车辆运动、信号周期与训练分均为简化模拟，不代表实际考试判定。</p>
+    </div>
+  </div>
+  <dialog class="help-modal" id="help-dialog"><h2>先熟悉，再上路。</h2><p>电脑按住 W 加速、S 或空格刹车，A / D 转向。手机可同时按住方向与踏板。松开方向后方向盘逐渐回正；车辆会保持当前朝向。</p><p>路口练习：车头保持在停止线之前，完全停稳，待绿灯后通过。靠边停车：开启右转灯，慢慢靠到道路右侧，回正并停稳，最后关闭转向灯。</p><p>Q / E 转向灯 · C 视角 · P 暂停 · R 重置。离开页面或切换后台会自动暂停。</p><button class="tool" id="close-help">知道了</button></dialog>
+  <noscript>请启用 JavaScript 后体验城市驾驶练习。<a href="../">返回题库</a></noscript>
+  <script src="index.js"></script>
+  <script>
+  'use strict';
+  const engine = new Engine({"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":1000504,"index.wasm":39509339},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4});
+  const $ = id => document.getElementById(id);
+  let ready = false, started = false;
+  const activePointers = new Map();
+  function command(name, value) { if (ready && window.drivingCommand) window.drivingCommand(name, value); }
+  function clearControls() {
+    activePointers.clear();
+    document.querySelectorAll('[data-drive]').forEach(b => { b.classList.remove('active'); command(b.dataset.drive, false); });
+  }
+  document.querySelectorAll('[data-drive]').forEach(button => {
+    button.addEventListener('pointerdown', event => { event.preventDefault(); if (!ready) return; button.setPointerCapture(event.pointerId); activePointers.set(event.pointerId, button); button.classList.add('active'); command(button.dataset.drive, true); });
+    const release = event => { const target = activePointers.get(event.pointerId); activePointers.delete(event.pointerId); if (target && ![...activePointers.values()].includes(target)) { target.classList.remove('active'); command(target.dataset.drive, false); } };
+    button.addEventListener('pointerup', release); button.addEventListener('pointercancel', release); button.addEventListener('lostpointercapture', release);
+    button.addEventListener('contextmenu', e => e.preventDefault());
+    button.addEventListener('keydown', e => { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); command(button.dataset.drive, true); button.classList.add('active'); } });
+    button.addEventListener('keyup', e => { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); command(button.dataset.drive, false); button.classList.remove('active'); } });
+  });
+  ['camera', 'pause', 'reset', 'signal_left', 'signal_right'].forEach(id => $(id).addEventListener('click', () => { clearControls(); command(id); $('canvas').focus(); }));
+  $('mission').addEventListener('change', e => { const value=e.target.value; clearControls(); command('mission', value); $('canvas').focus(); });
+  window.addEventListener('keydown', e => { if (ready && e.target.tagName !== 'SELECT' && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault(); });
+  window.addEventListener('blur', () => { clearControls(); command('blur'); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { clearControls(); command('blur'); } });
+  $('help').addEventListener('click', () => { if (!window.__drivingState?.paused) command('pause'); clearControls(); $('help-dialog').showModal(); });
+  $('close-help').addEventListener('click', () => $('help-dialog').close());
+  window.addEventListener('driving-ready', () => { ready = true; $('intro').classList.add('hidden'); $('canvas').focus(); });
+  window.addEventListener('driving-state', event => {
+    const s = event.detail; window.__drivingState = s;
+    $('speed').textContent = Math.round(s.speed); $('speed').style.color = s.speed > 40 ? '#ffb69f' : '#f7fbf9';
+    $('score').textContent = s.score; $('step').textContent = s.step; $('hint').textContent = s.hint;
+    $('mission').value = s.mission; $('countdown').textContent = s.remaining;
+    const traffic = {red:['红灯 · 停车','#ff7474'],green:['绿灯 · 通行','#a9f0c5'],amber:['黄灯 · 注意','#f7d781']}[s.traffic];
+    $('traffic').textContent = traffic[0]; $('lamp').style.background = traffic[1]; $('lamp').style.boxShadow = `0 0 15px ${traffic[1]}55`;
+    $('camera').textContent = s.camera === 'chase' ? '驾驶视角' : '跟车视角'; $('pause').textContent = s.paused ? '继续' : '暂停';
+    ['left','right'].forEach(side => { const active = s.signal === side; $('signal_'+side).classList.toggle('active', active); $('signal_'+side).setAttribute('aria-pressed', String(active)); });
+    $('paused').classList.toggle('hidden', !s.paused && !s.complete);
+    $('paused-title').textContent = s.complete ? '练习完成 · '+s.score+' 分' : '训练已暂停';
+    $('paused-copy').textContent = s.complete ? '重新开始，或选择另一项训练' : '点击右上方「继续」恢复驾驶';
+  });
+  $('start').addEventListener('click', async () => {
+    if (started) return; started = true; $('start').disabled = true; $('start').textContent = '正在进入城市…';
+    $('progress').classList.remove('hidden'); $('loading-text').textContent = '正在加载城市与驾驶引擎，请稍候…';
+    try {
+      const missing = Engine.getMissingFeatures({ threads:false });
+      if (missing.length) throw new Error('当前浏览器缺少 '+missing.join('、')+' 支持，请使用新版 Chrome、Edge 或 Safari。');
+      await engine.startGame({onProgress(current,total){ if(total>0){ const percent=Math.min(100,Math.round(current/total*100)); $('progress-bar').style.width=percent+'%'; $('loading-text').textContent='城市加载中 · '+percent+'%'; } }});
+      // The scene's ready signal owns hiding the loader, so a script error never looks like an empty successful load.
+      if (!ready) $('loading-text').textContent = '模型已下载，正在准备城市…';
+    } catch (error) {
+      console.error(error); $('error').textContent = '加载未完成：'+error.message; $('error').classList.remove('hidden');
+      $('loading-text').textContent = '可返回题库，继续使用轻量驾驶教练。'; $('start').textContent = '重新加载页面'; $('start').disabled=false; $('start').onclick=()=>location.reload();
+    }
+  });
+  </script>
+</body>
+</html>

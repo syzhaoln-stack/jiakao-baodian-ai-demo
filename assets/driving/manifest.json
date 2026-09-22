@@ -1,0 +1,169 @@
+{
+  "generator": "Blender 4.5.13 LTS",
+  "script": "scripts/blender-driving-assets.py",
+  "license": "Original procedural geometry created for this project; no external textures.",
+  "coordinates": {
+    "unit": "metre",
+    "up": "+Y",
+    "vehicle_forward": "-Z",
+    "car_origin": "ground between axles"
+  },
+  "road": {
+    "main_width": 14,
+    "cross_width": 14,
+    "main_length": 180,
+    "cross_length": 150,
+    "intersection_half_width": 7,
+    "crosswalk_center_z": [
+      9.1,
+      -9.1
+    ],
+    "stop_line_z": [
+      11.2,
+      -11.2
+    ],
+    "initial_car_position": [
+      1.75,
+      0,
+      35
+    ]
+  },
+  "traffic_signals": [
+    {
+      "name": "south_to_north",
+      "center": [
+        2.3,
+        5.2,
+        -8.4
+      ],
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "lamps": [
+        [
+          2.3,
+          5.74,
+          -8.122
+        ],
+        [
+          2.3,
+          5.2,
+          -8.122
+        ],
+        [
+          2.3,
+          4.66,
+          -8.122
+        ]
+      ]
+    },
+    {
+      "name": "north_to_south",
+      "center": [
+        -2.3,
+        5.2,
+        8.4
+      ],
+      "normal": [
+        0,
+        0,
+        -1
+      ],
+      "lamps": [
+        [
+          -2.3,
+          5.74,
+          8.122
+        ],
+        [
+          -2.3,
+          5.2,
+          8.122
+        ],
+        [
+          -2.3,
+          4.66,
+          8.122
+        ]
+      ]
+    },
+    {
+      "name": "west_to_east",
+      "center": [
+        8.4,
+        5.2,
+        2.3
+      ],
+      "normal": [
+        -1,
+        0,
+        0
+      ],
+      "lamps": [
+        [
+          8.122,
+          5.74,
+          2.3
+        ],
+        [
+          8.122,
+          5.2,
+          2.3
+        ],
+        [
+          8.122,
+          4.66,
+          2.3
+        ]
+      ]
+    },
+    {
+      "name": "east_to_west",
+      "center": [
+        -8.4,
+        5.2,
+        -2.3
+      ],
+      "normal": [
+        1,
+        0,
+        0
+      ],
+      "lamps": [
+        [
+          -8.122,
+          5.74,
+          -2.3
+        ],
+        [
+          -8.122,
+          5.2,
+          -2.3
+        ],
+        [
+          -8.122,
+          4.66,
+          -2.3
+        ]
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "file": "coach-car.glb",
+      "bytes": 183584,
+      "meshes": 9,
+      "triangles": 4130
+    },
+    {
+      "file": "city-block.glb",
+      "bytes": 2688492,
+      "meshes": 17,
+      "triangles": 48040
+    }
+  ],
+  "physics": "Visual geometry only. Runtime supplies planar road collision and driving rules.",
+  "source": "assets/driving/source/driving-training-assets.blend"
+}
