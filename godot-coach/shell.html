@@ -46,21 +46,141 @@
       <p>在三维城市里练习路口观察、平稳制动与靠边停车。<br>切换驾驶视角，感受车道位置与停止线距离。</p>
       <div class="chips"><span>双视角切换</span><span>实时操作提示</span><span>手机触控驾驶</span></div>
       <div class="legend"><div><b>W / S</b> 油门 / 刹车</div><div><b>A / D</b> 向左 / 向右</div><div><b>Q / E</b> 左 / 右转向灯</div><div><b>C / R</b> 视角 / 重置</div></div>
-      <button id="start" class="start">进入城市，开始练习 →</button><a class="return" href="../">返回题库</a>
+      <button id="start" class="start" disabled>正在准备驾驶引擎…</button><a class="return" href="../">返回题库</a>
       <div id="progress" class="load hidden"><i id="progress-bar"></i></div>
-      <div id="loading-text">首次加载约 40 MB；手机横屏视野更好。</div>
+      <div id="loading-text">正在准备驾驶引擎…首次资源约 11 MB，手机横屏视野更好。</div>
       <p id="error" class="hidden" role="alert"></p>
       <p class="note">这是驾驶操作认知演示；车辆运动、信号周期与训练分均为简化模拟，不代表实际考试判定。</p>
     </div>
   </div>
   <dialog class="help-modal" id="help-dialog"><h2>先熟悉，再上路。</h2><p>电脑按住 W 加速、S 或空格刹车，A / D 转向。手机可同时按住方向与踏板。松开方向后方向盘逐渐回正；车辆会保持当前朝向。</p><p>路口练习：车头保持在停止线之前，完全停稳，待绿灯后通过。靠边停车：开启右转灯，慢慢靠到道路右侧，回正并停稳，最后关闭转向灯。</p><p>Q / E 转向灯 · C 视角 · P 暂停 · R 重置。离开页面或切换后台会自动暂停。</p><button class="tool" id="close-help">知道了</button></dialog>
   <noscript>请启用 JavaScript 后体验城市驾驶练习。<a href="../">返回题库</a></noscript>
-  <script src="$GODOT_URL"></script>
   <script>
   'use strict';
-  const engine = new Engine($GODOT_CONFIG);
+  const GODOT_CONFIGURATION = $GODOT_CONFIG;
+  const DEFAULT_ENGINE_SCRIPT = '$GODOT_URL';
+  // Updated reproducibly by prepare_web.py after exporting the Godot project.
+  const DELIVERABLES = {"wasm":{"file":"engine-e2b4f6085f97.wasm.gz","bytes":10052173,"rawBytes":39509339},"pack":{"file":"training-8074aeef1bc0.pck","bytes":1000504},"script":{"file":"engine-68586d6daafc.js","bytes":279815}};
+  const CDN_BASE = 'https://cdn.jsdelivr.net/gh/syzhaoln-stack/jiakao-baodian-ai-demo@main/simulator/';
+  const RAW_BASE = 'https://raw.githubusercontent.com/syzhaoln-stack/jiakao-baodian-ai-demo/main/simulator/';
+  const IS_LOCAL = ['localhost','127.0.0.1','::1','[::1]'].includes(location.hostname);
+  let engine = null;
   const $ = id => document.getElementById(id);
   let ready = false, started = false;
+  let bootstrapError = false;
+  const nativeFetch = window.fetch.bind(window);
+  const resourceLoads = new Map();
+  const downloadProgress = new Map();
+  let optimizedPending = 0;
+  let rejectStartup = null;
+  function downloadNotice(message) {
+    const values=[...downloadProgress.values()];
+    const current=values.reduce((sum,item)=>sum+item.loaded,0);
+    const total=values.reduce((sum,item)=>sum+item.total,0);
+    $('progress').classList.remove('hidden');
+    if(total) $('progress-bar').style.width=Math.min(100,Math.round(current/total*100))+'%';
+    $('loading-text').textContent=message || `下载驾驶资源 · ${(current/1000000).toFixed(1)} / ${(total/1000000).toFixed(1)} MB`;
+  }
+  function mirrorURLs(file) {
+    const local=new URL(file,location.href).href;
+    return IS_LOCAL ? [local] : [RAW_BASE+file,CDN_BASE+file,local];
+  }
+  async function downloadBytes(url, key, expectedSize) {
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),30000);
+    try {
+      const response=await nativeFetch(url,{signal:controller.signal,cache:'default'});
+      if(!response.ok) throw new Error(`HTTP ${response.status}`);
+      const reader=response.body.getReader(), chunks=[];
+      let length=0;
+      while(true) {
+        const result=await reader.read();
+        if(result.done) break;
+        chunks.push(result.value); length+=result.value.byteLength;
+        downloadProgress.set(key,{loaded:length,total:expectedSize});
+        downloadNotice();
+      }
+      const bytes=new Uint8Array(length);
+      let offset=0;
+      for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
+      return bytes;
+    } finally {clearTimeout(timer);}
+  }
+  async function loadResource(key) {
+    const item=DELIVERABLES[key];
+    optimizedPending++;
+    try {
+      let lastError;
+      const mirrors=mirrorURLs(item.file);
+      for(const [mirrorIndex,url] of mirrors.entries()) {
+        for(let attempt=0;attempt<(mirrorIndex===0?2:1);attempt++) {
+          try {
+            downloadProgress.set(key,{loaded:0,total:item.bytes});
+            downloadNotice(`正在连接${url.startsWith(RAW_BASE)||url.startsWith(CDN_BASE)?'加速节点':'备用资源'}${attempt?'，重新尝试…':'…'}`);
+            const compressed=await downloadBytes(url,key,item.bytes);
+            let bytes=compressed;
+            if(key==='wasm') {
+              const decompressed=await new Response(new Blob([compressed]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+              bytes=new Uint8Array(decompressed);
+              if(bytes.byteLength!==item.rawBytes || bytes[0]!==0 || bytes[1]!==97 || bytes[2]!==115 || bytes[3]!==109) throw new Error('驾驶引擎文件校验失败');
+            } else if(bytes.byteLength!==item.bytes || bytes[0]!==71 || bytes[1]!==68 || bytes[2]!==80 || bytes[3]!==67) {
+              throw new Error('训练场景文件校验失败');
+            }
+            return bytes;
+          } catch(error) {lastError=error;}
+        }
+      }
+      const error=new Error((key==='wasm'?'驾驶引擎':'训练场景')+'下载失败，请检查网络后重试。'+(lastError?.name==='AbortError'?'连接已超时。':''));
+      if(rejectStartup) rejectStartup(error);
+      throw error;
+    } finally {optimizedPending--;}
+  }
+  // Match only this game's two resource URLs. Full reads ensure interrupted
+  // streams reject here instead of hanging inside Godot's native preloader.
+  window.fetch=function(input,init) {
+    const url=new URL(input instanceof Request ? input.url : String(input),location.href).href;
+    const wasmURL=new URL(GODOT_CONFIGURATION.executable+'.wasm',location.href).href;
+    const packURL=new URL(GODOT_CONFIGURATION.mainPack || GODOT_CONFIGURATION.executable+'.pck',location.href).href;
+    const key=url===wasmURL && DELIVERABLES.wasm && typeof DecompressionStream!=='undefined' ? 'wasm' : (url===packURL && DELIVERABLES.pack ? 'pack' : '');
+    if(!key) return nativeFetch(input,init);
+    if(!resourceLoads.has(key)) resourceLoads.set(key,loadResource(key));
+    return resourceLoads.get(key).then(bytes=>new Response(bytes,{headers:{'Content-Type':key==='wasm'?'application/wasm':'application/octet-stream'}}));
+  };
+  async function loadScript(url) {
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),18000);
+    let blobURL;
+    try {
+      const response=await nativeFetch(url,{signal:controller.signal});
+      if(!response.ok) throw new Error(`HTTP ${response.status}`);
+      const source=await response.text();
+      blobURL=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));
+      await new Promise((resolve,reject)=>{
+        const script=document.createElement('script');
+        script.src=blobURL;
+        script.onload=()=>typeof Engine==='function'?resolve():reject(new Error('引擎脚本未就绪'));
+        script.onerror=()=>reject(new Error('引擎脚本加载失败'));
+        document.head.appendChild(script);
+      });
+    } finally {clearTimeout(timer);if(blobURL)URL.revokeObjectURL(blobURL);}
+  }
+  async function prepareEngine() {
+    let lastError;
+    for(const url of mirrorURLs(DELIVERABLES.script?.file || DEFAULT_ENGINE_SCRIPT)) {
+      try {await loadScript(url);engine=new Engine(GODOT_CONFIGURATION);break;}
+      catch(error){lastError=error;}
+    }
+    if(!engine) {
+      bootstrapError=true;
+      $('error').textContent='驾驶引擎暂时未能连接，请重试或返回题库。';
+      $('error').classList.remove('hidden');
+      $('start').textContent='重新加载页面';$('start').disabled=false;
+      $('loading-text').textContent=lastError?.message || '引擎加载失败';
+      return;
+    }
+    $('start').textContent='进入城市，开始练习 →';$('start').disabled=false;
+    $('loading-text').textContent=typeof DecompressionStream==='undefined'?'当前浏览器使用兼容模式，首次资源约 41 MB。':'首次资源约 11 MB；手机横屏视野更好。';
+  }
   const activePointers = new Map();
   function command(name, value) { if (ready && window.drivingCommand) window.drivingCommand(name, value); }
   function clearControls() {
@@ -97,12 +217,23 @@
     $('paused-copy').textContent = s.complete ? '重新开始，或选择另一项训练' : '点击右上方「继续」恢复驾驶';
   });
   $('start').addEventListener('click', async () => {
+    if(bootstrapError){location.reload();return;}
+    if(!engine) return;
     if (started) return; started = true; $('start').disabled = true; $('start').textContent = '正在进入城市…';
     $('progress').classList.remove('hidden'); $('loading-text').textContent = '正在加载城市与驾驶引擎，请稍候…';
     try {
       const missing = Engine.getMissingFeatures({ threads:false });
       if (missing.length) throw new Error('当前浏览器缺少 '+missing.join('、')+' 支持，请使用新版 Chrome、Edge 或 Safari。');
-      await engine.startGame({onProgress(current,total){ if(total>0){ const percent=Math.min(100,Math.round(current/total*100)); $('progress-bar').style.width=percent+'%'; $('loading-text').textContent='城市加载中 · '+percent+'%'; } }});
+      if(DELIVERABLES.wasm && typeof DecompressionStream!=='undefined') downloadProgress.set('wasm',{loaded:0,total:DELIVERABLES.wasm.bytes});
+      if(DELIVERABLES.pack) downloadProgress.set('pack',{loaded:0,total:DELIVERABLES.pack.bytes});
+      let startupTimer;
+      try {
+        await Promise.race([
+          engine.startGame({onProgress(current,total){ if(optimizedPending){downloadNotice();return;} if(total>0){ const percent=Math.min(100,Math.round(current/total*100)); $('progress-bar').style.width=percent+'%'; $('loading-text').textContent=percent===100?'资源已就绪，正在打开城市…':'城市加载中 · '+percent+'%'; } }}),
+          new Promise((_,reject)=>{rejectStartup=reject;}),
+          new Promise((_,reject)=>{startupTimer=setTimeout(()=>reject(new Error('加载超时，请检查网络后重新加载。')),135000);})
+        ]);
+      } finally {clearTimeout(startupTimer);rejectStartup=null;}
       // The scene's ready signal owns hiding the loader, so a script error never looks like an empty successful load.
       if (!ready) $('loading-text').textContent = '模型已下载，正在准备城市…';
     } catch (error) {
@@ -110,6 +241,7 @@
       $('loading-text').textContent = '可返回题库，继续使用轻量驾驶教练。'; $('start').textContent = '重新加载页面'; $('start').disabled=false; $('start').onclick=()=>location.reload();
     }
   });
+  prepareEngine();
   </script>
 </body>
 </html>

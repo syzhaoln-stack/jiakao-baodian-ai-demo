@@ -22,8 +22,8 @@
       "sha256": "34106eaa63a3285aef90a4f3f12ebea55967aed885bd9fe9a101ba4e69db422c"
     },
     "README.md": {
-      "bytes": 3736,
-      "sha256": "d2bfa3e2af2261ccec3065fad741dcb3c053503409d53fef52612be32270e47b"
+      "bytes": 3795,
+      "sha256": "cb14da54881f8c1ffebe64a19acd96d986a7bb370f2a25a119d6991c93cf52c3"
     },
     "data/knowledge_graph.json": {
       "bytes": 1178449,
@@ -45,6 +45,14 @@
       "bytes": 50388,
       "sha256": "9fe3d69283745b97dfa146fec487ce9f174dc095ba03c899f2b9d216d6ea2299"
     },
+    "simulator/engine-68586d6daafc.js": {
+      "bytes": 279815,
+      "sha256": "68586d6daafc93c6e697b3fb258976874aa7459b8931165ebb1dc3c9614cc42c"
+    },
+    "simulator/engine-e2b4f6085f97.wasm.gz": {
+      "bytes": 10052173,
+      "sha256": "e2b4f6085f97219a7117dcb572b0bd7c45a60b0bc0f18d6c4b28ff288e26598d"
+    },
     "simulator/index.audio.position.worklet.js": {
       "bytes": 2973,
       "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8"
@@ -54,8 +62,8 @@
       "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3"
     },
     "simulator/index.html": {
-      "bytes": 18905,
-      "sha256": "1475ca4081e3a21460d8b823aafe05eb1521a8f48bcc3ce4b5ebb0db516bc8c6"
+      "bytes": 26396,
+      "sha256": "5de9270a17ec5c7a62abe5630ac2a63bfdbaf915d599a71f546d7844a1d1b44b"
     },
     "simulator/index.js": {
       "bytes": 279815,
@@ -72,6 +80,10 @@
     "simulator/index.wasm": {
       "bytes": 39509339,
       "sha256": "7eda98958eb09135a1acb54a4323a00b1a55af1997f15fa1cdc2b93e3df46656"
+    },
+    "simulator/training-8074aeef1bc0.pck": {
+      "bytes": 1000504,
+      "sha256": "8074aeef1bc0c061cc39f782af5b51069e47c506f4752ec256ea02f84e72776a"
     },
     "godot-coach/assets/city-block.glb": {
       "bytes": 2688492,
@@ -97,17 +109,21 @@
       "bytes": 163,
       "sha256": "fe5fe858093943f9ced649f1e197b75ac81f15ab3baea71bd05b426b897defbd"
     },
+    "godot-coach/prepare_web.py": {
+      "bytes": 1501,
+      "sha256": "2e7334ce6090549217004865b34108dddb67a74d7f6a5107e30813540db6c0d9"
+    },
     "godot-coach/project.godot": {
       "bytes": 846,
       "sha256": "b54b270c4ecf0b5df4642b68fc413bbbf3892857b9dbeabcd55c6956a168dbb4"
     },
     "godot-coach/README.md": {
-      "bytes": 2278,
-      "sha256": "ddb635e15cdf77c940a219215fc75d7450012faa3f01b6f8ab9beb1cc9754d9b"
+      "bytes": 3233,
+      "sha256": "0b868223448d39629e710fbed6783868be0cffd4e81d9fbe888092b1815d849f"
     },
     "godot-coach/shell.html": {
-      "bytes": 18684,
-      "sha256": "8340412a159f3bdea7abe124ec2da07e938620e84d5468d7b3319319af4113a9"
+      "bytes": 26175,
+      "sha256": "7f5448634999b4201df87c857fc99b9da860fd91c8da3c54186dde18804e00f6"
     },
     "godot-coach/tests/drive_test.gd": {
       "bytes": 4123,
@@ -116,6 +132,14 @@
     "godot-coach/tests/drive_test.gd.uid": {
       "bytes": 20,
       "sha256": "924b83eb8afca58010bd1ec44414aa5f7adc7758b3558fe5604c6ca209749ce3"
+    },
+    "godot-coach/tests/loader-regression.cjs": {
+      "bytes": 3822,
+      "sha256": "0821664484345622f9486ab716b88bffebe434c74c9012fc4bbe1c024e3ed57d"
+    },
+    "godot-coach/tests/web-smoke.cjs": {
+      "bytes": 4525,
+      "sha256": "17ce3ee10f7b398bedccb6973d8b134d964b7fc3e3ecda09b832f89cfc180250"
     },
     "assets/driving/city-block.glb": {
       "bytes": 2688492,
